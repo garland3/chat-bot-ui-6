@@ -1,5 +1,5 @@
 # Configuration
-$WaitTimeSeconds = 60
+$WaitTimeSeconds = 120
 
 while ($true) {
     Clear-Host
