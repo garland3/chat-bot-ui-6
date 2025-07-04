@@ -9,6 +9,9 @@ from app.middleware.auth import AuthMiddleware
 from app.routers import chat, websocket, data
 from app.services.llm_client import llm_client
 from app.config import settings
+import os
+
+SYSTEM_PROMPT_CONTENT = ""
 
 class CSPMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -35,6 +38,25 @@ class CSPMiddleware(BaseHTTPMiddleware):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global SYSTEM_PROMPT_CONTENT
+    print(f"Lifespan starting: system_prompt_override = {settings.system_prompt_override}")
+    print(f"Lifespan starting: disable_llm_calls = {settings.disable_llm_calls}")
+    
+    if settings.system_prompt_override:
+        print("Using system_prompt_override")
+        SYSTEM_PROMPT_CONTENT = settings.system_prompt_override
+    else:
+        print("Trying to read system_prompt.md file")
+        try:
+            with open("system_prompt.md", "r", encoding="utf-8") as f:
+                SYSTEM_PROMPT_CONTENT = f.read()
+                print(f"Successfully read file, content: {SYSTEM_PROMPT_CONTENT[:50]}...")
+        except FileNotFoundError:
+            print("File not found, using default")
+            SYSTEM_PROMPT_CONTENT = "You are a helpful AI assistant."
+    
+    print(f"Final SYSTEM_PROMPT_CONTENT: '{SYSTEM_PROMPT_CONTENT}'")
+
     if not settings.disable_llm_calls:
         try:
             print("Performing LLM health check...")
@@ -48,6 +70,8 @@ async def lifespan(app: FastAPI):
             print(f"LLM health check failed: {e}")
             # Continue startup even if health check fails (e.g., rate limits)
             print("Continuing startup despite health check failure...")
+    else:
+        print("LLM health check disabled")
     yield
 
 app = FastAPI(lifespan=lifespan)

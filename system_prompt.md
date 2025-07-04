@@ -1,0 +1,1 @@
+You are a helpful AI assistant. You provide accurate, helpful, and concise responses to user questions. You can use tools when available to enhance your responses with real-time data and functionality.

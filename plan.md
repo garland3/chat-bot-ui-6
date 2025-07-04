@@ -261,3 +261,147 @@ DISABLE_LLM_CALLS=false
 - Analytics and monitoring
 - Multi-model support
 - Plugin system for tools
+
+-----------------------------------------------------------------------------
+
+## NEW PHASES - Enhanced Features & Improvements
+
+### Phase 7: Session Persistence & Conversation History
+
+1. **Conversation History Management**:
+   - Implement persistent conversation history within sessions
+   - Each LLM call maintains full conversation context (not new conversations)
+   - Store conversation state in session management system
+
+2. **Session Logging**:
+   - Create .jsonl files in logs folder for each session
+   - Log all user messages, LLM responses, and tool interactions
+   - Include timestamps and session metadata
+
+3. **System Prompt Configuration**:
+   - Create `system_prompt.md` file with default system prompt ("You are a helpful AI assistant...")
+   - Use system prompt for every new session initialization
+   - Add environment variable override capability for custom system prompts
+
+### Phase 8: Tool Selection & Session Management
+
+1. **Fixed Tool Selection**:
+   - Lock tool selection after user chooses tools for a session
+   - Prevent tool changes mid-session to simplify user experience
+   - Display selected tools clearly in UI with locked state indicator
+
+2. **Session State Management**:
+   - Enhance session manager to track tool selections
+   - Implement tool locking mechanism
+   - Add session state validation
+
+### Phase 9: UI/UX Improvements
+
+1. **Application Branding**:
+   - Add `APP_NAME` environment variable to .env file
+   - Set default value to "Galaxy Chat"
+   - Use APP_NAME throughout UI (title, headers, etc.)
+
+2. **UI Component Enhancements**:
+   - Remove record icon from interface
+   - Expand chat input message area (wider and taller, most of screen width)
+   - Make chat session history scrollable
+   - Make chat input area scrollable for long inputs
+
+3. **Markdown Rendering**:
+   - Integrate markdown library for LLM output formatting
+   - Render LLM responses as HTML from markdown
+   - Support code blocks, lists, formatting, etc.
+
+### Phase 10: Multi-LLM Support
+
+1. **LLM Configuration System**:
+   - Create YAML configuration file for multiple LLM providers
+   - Define structure: name, base_url, api_key, model_name, provider
+   - Support multiple LLM configurations simultaneously
+
+2. **LLM Selection Interface**:
+   - Add dropdown selector in UI for LLM choice
+   - Display available LLMs from configuration
+   - Allow users to switch LLMs per session
+
+3. **Dynamic LLM Client**:
+   - Modify LLM client to support multiple providers
+   - Handle different API formats and authentication methods
+   - Maintain backward compatibility with single LLM setup
+
+### Phase 11: Export & Download Features
+
+1. **Chat Session Export**:
+   - Implement chat session download as .txt file
+   - Format conversation history for readability
+   - Include session metadata (timestamp, tools used, LLM selected)
+
+2. **Export UI Components**:
+   - Add download button to chat interface
+   - Generate formatted text file from session data
+   - Handle file download through browser
+
+### Updated Environment Variables
+
+```env
+# Application Configuration
+APP_NAME=Galaxy Chat
+SYSTEM_PROMPT_OVERRIDE=  # Optional override for system_prompt.md
+
+# LLM Configuration (Legacy - for backward compatibility)
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_API_KEY=your-api-key
+LLM_MODEL_NAME=gpt-3.5-turbo
+
+# Multi-LLM Configuration
+LLM_CONFIG_FILE=config/llms.yml  # Path to YAML configuration file
+
+# Testing Configuration
+DISABLE_WEBSOCKET=false
+DISABLE_LLM_CALLS=false
+TEST_MODE=false
+TEST_EMAIL=test@test.com
+```
+
+### New Configuration Files
+
+**system_prompt.md**:
+```markdown
+You are a helpful AI assistant. You provide accurate, helpful, and concise responses to user questions. You can use tools when available to enhance your responses with real-time data and functionality.
+```
+
+**config/llms.yml**:
+```yaml
+llms:
+  - name: "OpenAI GPT-3.5"
+    provider: "openai"
+    base_url: "https://api.openai.com/v1"
+    api_key: "${OPENAI_API_KEY}"
+    model_name: "gpt-3.5-turbo"
+    
+  - name: "OpenAI GPT-4"
+    provider: "openai"
+    base_url: "https://api.openai.com/v1"
+    api_key: "${OPENAI_API_KEY}"
+    model_name: "gpt-4"
+    
+  - name: "Local Ollama"
+    provider: "ollama"
+    base_url: "http://localhost:11434/v1"
+    api_key: "not-required"
+    model_name: "llama2"
+```
+
+### Implementation Priority
+
+These new phases should be implemented after the original Phase 6 completion. Each phase builds upon the previous infrastructure while adding significant user experience improvements and advanced functionality.
+
+**Development Guidelines**: Continue the pattern of approximately 5 commits per phase, maintaining clear development history and enabling easy rollbacks if needed.
+
+## Testing Guidelines
+
+- **Test Timeouts**: Use `pytest-timeout` plugin to prevent hanging tests. Run tests with timeout flags:
+  - Chat tests: `uv run pytest -v tests/test_chat.py --timeout=20`
+  - Full test suite: `uv run pytest -v --timeout=60`
+  - This prevents tests from hanging indefinitely due to network issues or infinite loops

@@ -1,5 +1,6 @@
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Optional
 
 class Settings(BaseSettings):
     llm_provider: str = "openai"  # "openai" or "anthropic"
@@ -10,6 +11,7 @@ class Settings(BaseSettings):
     test_email: str = "test@test.com"
     disable_websocket: bool = False
     disable_llm_calls: bool = False
+    system_prompt_override: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
