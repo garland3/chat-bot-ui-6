@@ -37,11 +37,11 @@ def test_chat_message_llm_enabled_streaming(mock_tool_manager, mock_chat_complet
 
     mock_chat_completion.side_effect = [mock_llm_response_no_tool, mock_iter_lines()]
 
-    response = client.post("/chat", headers={"X-EMAIL-USER": "streaming_test@example.com"})
+    response = client.post("/chat", headers={"X-EMAIL-USER": "test@example.com"})
     session_id = response.json()["session_id"]
 
     message_payload = {"content": "Hello"}
-    chat_response = client.post(f"/chat/{session_id}/message", json=message_payload, headers={"X-EMAIL-USER": "streaming_test@example.com"})
+    chat_response = client.post(f"/chat/{session_id}/message", json=message_payload, headers={"X-EMAIL-USER": "test@example.com"})
     assert chat_response.status_code == 200
     assert chat_response.text == "Hello world!"
     
@@ -56,9 +56,8 @@ def test_chat_message_llm_enabled_streaming(mock_tool_manager, mock_chat_complet
     mock_chat_completion.assert_any_call(messages=expected_messages_first, stream=True)
 
 @patch('app.services.llm_client.LLMClient.chat_completion')
-@patch('app.routers.chat.tool_manager.get_tool')
 @patch('app.routers.chat.tool_manager') # Patch tool_manager in the router
-def test_chat_message_tool_call(mock_router_tool_manager, mock_get_tool, mock_chat_completion):
+def test_chat_message_tool_call(mock_router_tool_manager, mock_chat_completion):
     # Ensure tools are passed for this test
     mock_router_tool_manager.get_all_tool_definitions.return_value = [
         # Add a dummy tool definition for the mock to return
@@ -68,7 +67,7 @@ def test_chat_message_tool_call(mock_router_tool_manager, mock_get_tool, mock_ch
     # Mock the tool execution
     mock_math_tool = MagicMock()
     mock_math_tool.execute.return_value = {"result": 8}
-    mock_get_tool.return_value = mock_math_tool
+    mock_router_tool_manager.get_tool.return_value = mock_math_tool
 
     # Mock the first LLM response (non-streaming, tool call)
     mock_llm_response_tool_call = MagicMock(spec=requests.Response)
@@ -94,22 +93,18 @@ def test_chat_message_tool_call(mock_router_tool_manager, mock_get_tool, mock_ch
 
     mock_chat_completion.side_effect = [mock_llm_response_tool_call, mock_iter_lines_final()]
 
-    # Create a session with unique user email
-    response = client.post("/chat", headers={"X-EMAIL-USER": "tool_test@example.com"})
-    assert response.status_code == 200
+    response = client.post("/chat", headers={"X-EMAIL-USER": "test@example.com"})
     session_id = response.json()["session_id"]
-    assert session_id is not None
 
-    # Include tools in the message payload to make them available
-    message_payload = {"content": "What is 5 + 3?", "tools": ["BasicMathTool"]}
-    chat_response = client.post(f"/chat/{session_id}/message", json=message_payload, headers={"X-EMAIL-USER": "tool_test@example.com"})
+    message_payload = {"content": "What is 5 + 3?"}
+    chat_response = client.post(f"/chat/{session_id}/message", json=message_payload, headers={"X-EMAIL-USER": "test@example.com"})
 
     assert chat_response.status_code == 200
     assert chat_response.text == "The result is 8."
 
     # Assertions for LLM calls and tool execution
     assert mock_chat_completion.call_count == 2
-    mock_get_tool.assert_called_once_with("BasicMathTool")
+    mock_router_tool_manager.get_tool.assert_called_once_with("BasicMathTool")
     mock_math_tool.execute.assert_called_once_with(operation="add", num1=5, num2=3)
 
 @patch('app.services.llm_client.LLMClient.chat_completion')

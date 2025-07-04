@@ -1,4 +1,3 @@
-
 import json
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -91,8 +90,8 @@ async def chat_message(session_id: str, request: Request, message: dict):
                         except json.JSONDecodeError:
                             continue
                 # Append LLM's response to session messages after streaming is complete
-                messages.append({"role": "assistant", "content": full_content})
-                session_manager.update_session_messages(session_id, messages)
+                session_messages.append({"role": "assistant", "content": full_content})
+                session_manager.update_session_messages(session_id, session_messages)
             return StreamingResponse(generate_tool_response(), media_type="text/event-stream")
         else:
             # If not a tool call, stream the response directly
@@ -113,8 +112,8 @@ async def chat_message(session_id: str, request: Request, message: dict):
                         except json.JSONDecodeError:
                             continue
                 # Append LLM's response to session messages after streaming is complete
-                messages.append({"role": "assistant", "content": full_content})
-                session_manager.update_session_messages(session_id, messages)
+                session_messages.append({"role": "assistant", "content": full_content})
+                session_manager.update_session_messages(session_id, session_messages)
             return StreamingResponse(generate_llm_response(), media_type="text/event-stream")
 
     except Exception as e:
