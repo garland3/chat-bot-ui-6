@@ -27,6 +27,8 @@ jobs:
       run: uv venv
     - name: Install dependencies
       run: uv pip install -r requirements.txt -r requirements-dev.txt
+    - name: Initialize database
+      run: python data/init_db.py
     - name: Run tests
       run: source .venv/bin/activate && pytest -v --timeout=60
 
