@@ -107,6 +107,9 @@ Built-in tools implementing abstract base class:
 
 ### Dependencies
 
+- **Python Version**: Python 3.12
+- **Package Manager**: uv (ultrafast Python package installer and resolver) Always use `uv pip install`
+- **Virtual Environment**: uv-managed virtual environment
 - **Backend**: FastAPI, requests, pydantic, pytest, httpx, pytest-asyncio
 - **Database**: SQLite for sample data
 - **WebSocket**: FastAPI WebSocket support
@@ -153,34 +156,44 @@ Built-in tools implementing abstract base class:
 ├── docker-compose.yml         # Local development setup
 ├── .dockerignore              # Docker ignore file
 ├── pytest.ini                # Pytest configuration
+├── pyproject.toml             # uv project configuration
+├── uv.lock                    # uv lock file for reproducible builds
+├── .python-version            # Python version specification (3.11)
 ├── .env                       # Environment variables
 ├── .env.example               # Environment variables template
-├── requirements.txt           # Python dependencies
+├── requirements.txt           # Python dependencies (uv-generated)
 ├── requirements-dev.txt       # Development dependencies
 └── README.md                  # Project documentation
 ```
 
 ## Implementation Phases
 
+**Development Guidelines**: Each phase should result in approximately 5 commits. Commit frequently to maintain clear development history and enable easy rollbacks if needed.
+
 ### Phase 1: Core Infrastructure & DevOps
 
-1. FastAPI application setup with basic routers
-2. Pydantic configuration system
-3. **Docker Setup**:
-   - Dockerfile for production container
+1. **Python Environment Setup**:
+   - Install uv (`pip install uv` or platform-specific installer)
+   - Create `.python-version` file specifying Python 3.11
+   - Initialize uv project with `pyproject.toml`
+   - Set up virtual environment with `uv venv`
+2. FastAPI application setup with basic routers
+3. Pydantic configuration system
+4. **Docker Setup**:
+   - Dockerfile for production container (using Python 3.11)
    - docker-compose.yml for local development
    - .dockerignore file
-4. **Basic Testing**:
+5. **Basic Testing**:
    - pytest configuration (pytest.ini)
    - Health check endpoint test
    - Configuration loading test
-5. **CI/CD Pipeline**:
-   - GitHub Actions workflow
+6. **CI/CD Pipeline**:
+   - GitHub Actions workflow (with uv setup)
    - Automated testing on push/PR
    - Container build and push to GitHub Container Registry (ghcr.io)
    - Multi-stage builds for optimization
-6. **DevContainer Setup**:
-   - .devcontainer/devcontainer.json
+7. **DevContainer Setup**:
+   - .devcontainer/devcontainer.json (with uv and Python 3.11)
    - Development environment configuration
 
 ### Phase 2: Authentication & Session Management

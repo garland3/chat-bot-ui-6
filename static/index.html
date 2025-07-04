@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Data MCP Tools UI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>Chat Data MCP Tools UI</h1>
+            <div class="user-info">
+                <span id="user-email">Loading...</span>
+                <button id="feedback-btn" class="btn btn-secondary">Feedback</button>
+            </div>
+        </header>
+
+        <!-- Main Chat Area -->
+        <main class="chat-container">
+            <!-- Tool Selection Panel -->
+            <aside class="tools-panel">
+                <h3>Available Tools</h3>
+                <div class="tool-selection">
+                    <div class="tool-item">
+                        <input type="checkbox" id="basic-math" value="BasicMathTool">
+                        <label for="basic-math">Basic Math</label>
+                    </div>
+                    <div class="tool-item">
+                        <input type="checkbox" id="code-execution" value="CodeExecutionTool">
+                        <label for="code-execution">Code Execution</label>
+                    </div>
+                    <div class="tool-item">
+                        <input type="checkbox" id="user-lookup" value="UserLookupTool">
+                        <label for="user-lookup">User Lookup</label>
+                    </div>
+                    <div class="tool-item">
+                        <input type="checkbox" id="sql-query" value="SQLQueryTool">
+                        <label for="sql-query">SQL Query</label>
+                    </div>
+                </div>
+
+                <h3>Data Sources</h3>
+                <div class="data-source-selection">
+                    <div class="data-item">
+                        <input type="checkbox" id="customers" value="customers">
+                        <label for="customers">Customer Data</label>
+                    </div>
+                    <div class="data-item">
+                        <input type="checkbox" id="payments" value="payments">
+                        <label for="payments">Payment Records</label>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Chat Messages Area -->
+            <div class="chat-area">
+                <div class="messages-container" id="messages-container">
+                    <div class="welcome-message">
+                        <h2>Welcome to Chat Data MCP Tools UI</h2>
+                        <p>Select tools and data sources from the left panel, then start chatting!</p>
+                    </div>
+                </div>
+
+                <!-- Status Indicator -->
+                <div class="status-indicator" id="status-indicator">
+                    <span class="status-text">Ready</span>
+                    <div class="status-dot ready"></div>
+                </div>
+
+                <!-- Message Input -->
+                <div class="message-input-container">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="message-input" 
+                            placeholder="Type your message here..." 
+                            rows="1"
+                            maxlength="2000"
+                        ></textarea>
+                        <button id="send-btn" class="btn btn-primary" disabled title="Send message">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="input-footer">
+                        <span class="char-count">0/2000</span>
+                        <span class="connection-status" id="connection-status">Connecting...</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Feedback Modal -->
+    <div class="modal-overlay" id="feedback-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Feedback</h3>
+                <button class="modal-close" id="close-feedback">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="feedback-form">
+                    <div class="form-group">
+                        <label for="feedback-type">Type:</label>
+                        <select id="feedback-type" required>
+                            <option value="">Select feedback type</option>
+                            <option value="bug">Bug Report</option>
+                            <option value="feature">Feature Request</option>
+                            <option value="improvement">Improvement</option>
+                            <option value="general">General Feedback</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="feedback-message">Message:</label>
+                        <textarea 
+                            id="feedback-message" 
+                            rows="4" 
+                            placeholder="Please describe your feedback..."
+                            required
+                        ></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancel-feedback">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
