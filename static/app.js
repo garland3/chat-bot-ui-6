@@ -32,18 +32,15 @@ document.addEventListener('DOMContentLoaded', () => {
     init();
 
     async function init() {
+        console.log('init(): Application initialization started.');
         setupEventListeners();
         setupTextareaAutoResize();
         await fetchAppSettings();
         await fetchLLMs();
-        await createChatSession(); // Ensure session is created before connecting WS
-        if (sessionId) {
-            connectWebSocket(sessionId);
-        }
+        console.log('init(): Connecting WebSocket immediately...');
+        connectWebSocket(); // Connect WebSocket immediately
         updateSendButtonState();
-        // Remove initial 'Connecting...' status
-        statusIndicator.classList.add('connected');
-        statusText.textContent = 'Connected';
+        console.log('init(): Application initialization finished.');
     }
 
     // Event Listeners Setup
@@ -429,13 +426,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // WebSocket connection management
-    function connectWebSocket(sId) {
+    function connectWebSocket() {
+        console.log(`connectWebSocket(): Attempting to connect WebSocket.`);
         if (ws) {
+            console.log('connectWebSocket(): Existing WebSocket found, closing it.');
             ws.close();
         }
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws/${sId}`;
+        const wsUrl = `${protocol}//${window.location.host}/ws`; // Connect to generic /ws initially
+        console.log(`connectWebSocket(): WebSocket URL: ${wsUrl}`);
         
         ws = new WebSocket(wsUrl);
 
@@ -444,6 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
             statusIndicator.classList.add('connected');
             statusText.textContent = 'Connected';
             showToast('Connected to chat server', 'success');
+            console.log('connectWebSocket(): WebSocket connection opened.');
         };
 
         ws.onmessage = (event) => {
@@ -459,19 +460,19 @@ document.addEventListener('DOMContentLoaded', () => {
             isConnected = false;
             statusIndicator.classList.remove('connected');
             statusText.textContent = 'Disconnected';
+            console.log(`connectWebSocket(): WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason}`);
             
             if (event.code !== 1000) { // Not a normal closure
+                console.log('connectWebSocket(): Abnormal closure, attempting to reconnect in 3 seconds...');
                 showToast('Connection lost. Attempting to reconnect...', 'warning');
                 setTimeout(() => {
-                    if (sessionId) {
-                        connectWebSocket(sessionId);
-                    }
+                    connectWebSocket(); // Reconnect without session ID
                 }, 3000);
             }
         };
 
         ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
+            console.error('connectWebSocket(): WebSocket error:', error);
             showToast('Connection error occurred', 'error');
         };
     }
@@ -479,6 +480,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle WebSocket messages
     function handleWebSocketMessage(data) {
         switch (data.type) {
+            case 'session_id':
+                sessionId = data.session_id;
+                console.log(`WebSocket received session_id: ${sessionId}`);
+                showToast(`Session ID received: ${sessionId}`, 'success');
+                // After receiving session ID, create chat session if not already created
+                if (!sessionId) {
+                    createChatSession();
+                }
+                break;
             case 'status':
                 showToast(data.message, 'info');
                 break;
@@ -498,6 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Create new chat session
     async function createChatSession() {
+        console.log('createChatSession(): Attempting to create new chat session.');
         try {
             showLoading(true);
             statusText.textContent = 'Creating session...';
@@ -514,17 +525,23 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (response.ok) {
                 sessionId = data.session_id;
+                console.log(`createChatSession(): Session created successfully. Session ID: ${sessionId}`);
                 showToast(`New session created`, 'success');
-                connectWebSocket(sessionId);
+                // Send session_id to backend via WebSocket if connected
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'session_init', session_id: sessionId }));
+                }
             } else {
+                console.error(`createChatSession(): Failed to create session. Status: ${response.status}, Detail: ${data.detail}`);
                 throw new Error(data.detail || 'Failed to create session');
             }
         } catch (error) {
-            console.error('Error creating chat session:', error);
+            console.error('createChatSession(): Error creating chat session:', error);
             showToast(`Failed to create session: ${error.message}`, 'error');
             statusText.textContent = 'Connection failed';
         } finally {
             showLoading(false);
+            console.log('createChatSession(): Finished session creation attempt.');
         }
     }
 

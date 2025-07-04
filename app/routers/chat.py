@@ -18,9 +18,11 @@ async def get_llms():
     return llm_client.get_available_llms()
 
 @router.post("/chat")
-def create_chat_session(request: Request):
+async def create_chat_session(request: Request):
     user_email = request.state.user_email
     session_id = session_manager.create_session(user_email)
+    # Send session_id to the client via WebSocket
+    await session_manager.send_websocket_message(session_id, {"type": "session_id", "session_id": session_id})
     return {"session_id": session_id}
 
 @router.get("/chat/{session_id}/download")

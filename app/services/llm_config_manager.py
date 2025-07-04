@@ -43,3 +43,6 @@ class LLMConfigManager:
 
     def get_all_llm_names(self) -> List[str]:
         return list(self.llm_configs.keys())
+
+    def get_all_llm_configs(self) -> List[LLMConfig]:
+        return list(self.llm_configs.values())
