@@ -26,6 +26,14 @@ def test_get_nonexistent_data_source():
     assert response.json() == {"detail": "Data source not found"}
 
 def test_get_data_unauthorized():
+    # Temporarily disable test mode to test actual auth failure
+    from app.config import settings
+    original_test_mode = settings.test_mode
+    settings.test_mode = False
+    
     response = client.get("/data/customers")
     assert response.status_code == 401
     assert response.json() == {"detail": "Unauthorized"}
+    
+    # Restore test mode
+    settings.test_mode = original_test_mode

@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     disable_websocket: bool = False
     disable_llm_calls: bool = False
     system_prompt_override: Optional[str] = None
+    app_name: str = "Galaxy Chat"
+    llm_config_file: str = "config/llms.yml"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

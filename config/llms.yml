@@ -1,0 +1,24 @@
+llms:
+  - name: "Anthropic Claude"
+    provider: "anthropic"
+    base_url: "https://api.anthropic.com/v1"
+    api_key: "${LLM_API_KEY}"
+    model_name: "claude-3-5-sonnet-20241022"
+    
+  - name: "OpenAI GPT-3.5"
+    provider: "openai"
+    base_url: "https://api.openai.com/v1"
+    api_key: "${OPENAI_API_KEY}"
+    model_name: "gpt-3.5-turbo"
+    
+  - name: "OpenAI GPT-4"
+    provider: "openai"
+    base_url: "https://api.openai.com/v1"
+    api_key: "${OPENAI_API_KEY}"
+    model_name: "gpt-4"
+    
+  - name: "Local Ollama"
+    provider: "ollama"
+    base_url: "http://localhost:11434/v1"
+    api_key: "not-required"
+    model_name: "llama2"

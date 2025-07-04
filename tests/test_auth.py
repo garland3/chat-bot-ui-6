@@ -14,7 +14,7 @@ def test_auth_middleware_test_mode():
     settings.test_mode = True
     response = client.get("/test-auth")
     assert response.status_code == 200
-    assert response.json() == {"user_email": settings.test_email}
+    assert response.json() == {"user_email": "test@test.com"}
     settings.test_mode = False
 
 def test_auth_middleware_unauthorized():

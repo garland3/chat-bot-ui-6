@@ -29,3 +29,24 @@ def test_rate_limiting():
     # Clean up the session
     session_manager.delete_session(session_id1)
     assert session_manager.get_session(session_id1) is None
+
+def test_update_session_tools():
+    user_email = "tool_update_test@example.com"
+    session_id = session_manager.create_session(user_email)
+    
+    tools_to_add = ["BasicMathTool", "UserLookupTool"]
+    session_manager.update_session_tools(session_id, tools_to_add)
+    
+    session = session_manager.get_session(session_id)
+    assert session is not None
+    assert "selected_tools" in session
+    assert session["selected_tools"] == tools_to_add
+
+    # Test updating with an empty list
+    session_manager.update_session_tools(session_id, [])
+    session = session_manager.get_session(session_id)
+    assert session["selected_tools"] == []
+
+    # Clean up the session
+    session_manager.delete_session(session_id)
+    assert session_manager.get_session(session_id) is None

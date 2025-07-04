@@ -16,10 +16,15 @@ class SessionManager:
             return session_id
 
         session_id = str(uuid.uuid4())
-        self.sessions[session_id] = {"user_email": user_email, "messages": []}
+        self.sessions[session_id] = {"user_email": user_email, "messages": [], "selected_tools": []}
         self.user_sessions[user_email] = session_id
         log_session_event(session_id, {"event": "session_created", "user_email": user_email})
         return session_id
+
+    def update_session_tools(self, session_id: str, tools: list):
+        if session_id in self.sessions:
+            self.sessions[session_id]["selected_tools"] = tools
+            log_session_event(session_id, {"event": "tools_updated", "tools": tools})
 
     def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         return self.sessions.get(session_id)

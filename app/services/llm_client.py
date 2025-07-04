@@ -2,13 +2,29 @@ import requests
 import json
 from app.config import settings
 from app.services.tool_manager import tool_manager
+from app.services.llm_config_manager import LLMConfigManager
 
 class LLMClient:
     def __init__(self):
-        self.provider = settings.llm_provider.lower()
-        self.base_url = settings.llm_base_url
-        self.api_key = settings.llm_api_key
-        self.model_name = settings.llm_model_name
+        self.llm_config_manager = LLMConfigManager(settings.llm_config_file)
+        self.current_llm_name = "Anthropic Claude" # Default LLM
+        self._set_current_llm_config()
+
+    def _set_current_llm_config(self):
+        config = self.llm_config_manager.get_llm_config(self.current_llm_name)
+        self.provider = config.provider.lower()
+        self.base_url = config.base_url
+        self.api_key = config.api_key
+        self.model_name = config.model_name
+
+    def set_llm(self, llm_name: str):
+        if llm_name not in self.llm_config_manager.get_all_llm_names():
+            raise ValueError(f"LLM '{llm_name}' not found in configuration.")
+        self.current_llm_name = llm_name
+        self._set_current_llm_config()
+
+    def get_available_llms(self):
+        return self.llm_config_manager.get_all_llm_names()
 
     def chat_completion(self, messages: list, stream: bool = False, tools: list = None):
         if self.provider == "anthropic":

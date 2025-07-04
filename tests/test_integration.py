@@ -7,7 +7,32 @@ import requests
 
 client = TestClient(app)
 
-def test_full_chat_interaction_with_math_tool():
+@patch('app.services.llm_client.LLMClient.chat_completion')
+def test_full_chat_interaction_with_math_tool(mock_chat_completion):
+    # Mock the first LLM response (non-streaming, tool call)
+    mock_llm_response_tool_call = MagicMock(spec=requests.Response)
+    mock_llm_response_tool_call.json.return_value = {
+        "choices": [{
+            "message": {
+                "role": "assistant",
+                "tool_calls": [{
+                    "id": "call_math_123",
+                    "function": {
+                        "name": "BasicMathTool",
+                        "arguments": "{\"operation\": \"add\", \"num1\": 10, \"num2\": 5}"
+                    }
+                }]
+            }
+        }]
+    }
+
+    # Mock the second LLM response (after tool execution, streaming)
+    def mock_iter_lines_final():
+        yield b'data: {"choices": [{"delta": {"content": "The result of 10 plus 5 is 15."}}]}'
+        yield b'data: [DONE]'
+
+    mock_chat_completion.side_effect = [mock_llm_response_tool_call, mock_iter_lines_final()]
+
     # 1. Create a session
     response = client.post("/chat", headers={"X-EMAIL-USER": "integration_test@example.com"})
     assert response.status_code == 200
@@ -131,7 +156,32 @@ def test_full_chat_interaction_with_sql_query_tool(mock_chat_completion):
     session_manager.delete_session(session_id)
     assert session_manager.get_session(session_id) is None
 
-def test_full_chat_interaction_with_code_execution_tool():
+@patch('app.services.llm_client.LLMClient.chat_completion')
+def test_full_chat_interaction_with_code_execution_tool(mock_chat_completion):
+    # Mock the first LLM response (non-streaming, tool call)
+    mock_llm_response_tool_call = MagicMock(spec=requests.Response)
+    mock_llm_response_tool_call.json.return_value = {
+        "choices": [{
+            "message": {
+                "role": "assistant",
+                "tool_calls": [{
+                    "id": "call_code_123",
+                    "function": {
+                        "name": "CodeExecutionTool",
+                        "arguments": "{\"language\": \"python\", \"code\": \"print('Hello from code!')\"}"
+                    }
+                }]
+            }
+        }]
+    }
+
+    # Mock the second LLM response (after tool execution, streaming)
+    def mock_iter_lines_final():
+        yield b'data: {"choices": [{"delta": {"content": "I executed the code and got the output: Hello from code!"}}]}'
+        yield b'data: [DONE]'
+
+    mock_chat_completion.side_effect = [mock_llm_response_tool_call, mock_iter_lines_final()]
+
     # 1. Create a session
     response = client.post("/chat", headers={"X-EMAIL-USER": "integration_test_code@example.com"})
     assert response.status_code == 200

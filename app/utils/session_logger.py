@@ -2,7 +2,7 @@
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 
 LOGS_DIR = "logs"
 
@@ -19,6 +19,5 @@ def log_session_event(session_id: str, event: dict):
 
     log_file = os.path.join(LOGS_DIR, f"{session_id}.jsonl")
     with open(log_file, "a") as f:
-        event["timestamp"] = datetime.utcnow().isoformat()
+        event["timestamp"] = datetime.now(UTC).isoformat()
         f.write(json.dumps(event) + "\n")
-

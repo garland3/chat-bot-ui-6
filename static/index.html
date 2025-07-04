@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Data MCP Tools</title>
+    <title id="appTitle">Chat Data MCP Tools</title>
     <link rel="stylesheet" href="/static/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -89,6 +89,14 @@
                             </div>
                         </div>
                     </div>
+                    <div class="llm-selector">
+                        <select id="llmSelect" class="llm-select">
+                            <!-- Options will be loaded dynamically by JavaScript -->
+                        </select>
+                    </div>
+                    <button class="action-btn" id="downloadChatBtn" title="Download Chat Session">
+                        <i class="fas fa-download"></i>
+                    </button>
                 </div>
             </div>
 
@@ -140,9 +148,7 @@
                                 <button class="action-btn" id="attachBtn" title="Attach file">
                                     <i class="fas fa-paperclip"></i>
                                 </button>
-                                <button class="action-btn" id="micBtn" title="Voice input">
-                                    <i class="fas fa-microphone"></i>
-                                </button>
+                                
                             </div>
                         </div>
                     </div>
@@ -162,6 +168,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="/static/app.js"></script>
 </body>
 </html>

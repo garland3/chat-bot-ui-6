@@ -13,8 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const attachBtn = document.getElementById('attachBtn');
     const micBtn = document.getElementById('micBtn');
     const toolToggleBtn = document.getElementById('toolToggleBtn');
-    console.log('toolToggleBtn element:', toolToggleBtn); // Debug log to check if element is found
     const toolPanel = document.getElementById('toolPanel');
+    const appTitle = document.getElementById('appTitle');
+    const sidebarAppName = document.querySelector('.sidebar-header .logo span');
+    const headerAppName = document.querySelector('.chat-header .header-left h1');
+    const welcomeTitle = document.querySelector('.welcome-message h2');
+    const llmSelect = document.getElementById('llmSelect');
+    const downloadChatBtn = document.getElementById('downloadChatBtn');
 
     // Application State
     let sessionId = null;
@@ -26,9 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the application
     init();
 
-    function init() {
+    async function init() {
         setupEventListeners();
         setupTextareaAutoResize();
+        await fetchAppSettings();
+        await fetchLLMs();
         createChatSession();
         updateSendButtonState();
     }
@@ -83,6 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
         micBtn.addEventListener('click', () => {
             showToast('Voice input coming soon!', 'info');
         });
+
+        // LLM selection change
+        llmSelect.addEventListener('change', handleLLMSelectionChange);
+
+        // Download chat button
+        downloadChatBtn.addEventListener('click', handleDownloadChat);
     }
 
     // Textarea auto-resize functionality
@@ -172,11 +185,53 @@ document.addEventListener('DOMContentLoaded', () => {
         return Array.from(checkboxes).map(cb => cb.value);
     }
 
+    // Handle LLM selection change
+    function handleLLMSelectionChange() {
+        const selectedLLM = llmSelect.value;
+        showToast(`Selected LLM: ${selectedLLM}`, 'info');
+    }
+
+    // Fetch available LLMs and populate dropdown
+    async function fetchLLMs() {
+        try {
+            const response = await fetch('/llms');
+            if (response.ok) {
+                const llmNames = await response.json();
+                llmSelect.innerHTML = ''; // Clear existing options
+                llmNames.forEach(llmName => {
+                    const option = document.createElement('option');
+                    option.value = llmName;
+                    option.textContent = llmName;
+                    llmSelect.appendChild(option);
+                });
+                // Optionally set a default or previously selected LLM
+                if (llmNames.length > 0) {
+                    llmSelect.value = llmNames[0]; // Set first as default
+                }
+            } else {
+                console.error('Failed to fetch LLMs');
+                showToast('Failed to load LLM options', 'error');
+            }
+        } catch (error) {
+            console.error('Error fetching LLMs:', error);
+            showToast('Error loading LLM options', 'error');
+        }
+    }
+
     // Handle new chat creation
     function handleNewChat() {
         if (confirm('Start a new chat? This will clear the current conversation.')) {
             clearChat();
             createChatSession();
+        }
+    }
+
+    // Handle download chat session
+    function handleDownloadChat() {
+        if (sessionId) {
+            window.open(`/chat/${sessionId}/download`, '_blank');
+        } else {
+            showToast('No active session to download.', 'warning');
         }
     }
 
@@ -309,7 +364,8 @@ document.addEventListener('DOMContentLoaded', () => {
             messageContent.appendChild(cursor);
             currentStreamingMessage = messageContent;
         } else {
-            messageContent.textContent = content;
+            messageContent.innerHTML = marked.parse(content);
+            addCopyButtonsToCodeBlocks(messageContent);
         }
         
         messageDiv.appendChild(messageContent);
@@ -340,9 +396,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // Finish streaming message
     function finishStreamingMessage(content) {
         if (currentStreamingMessage) {
-            currentStreamingMessage.textContent = content;
+            currentStreamingMessage.innerHTML = marked.parse(content);
+            addCopyButtonsToCodeBlocks(currentStreamingMessage);
             currentStreamingMessage = null;
         }
+    }
+
+    // Add copy buttons to code blocks
+    function addCopyButtonsToCodeBlocks(element) {
+        element.querySelectorAll('pre > code').forEach(codeBlock => {
+            const pre = codeBlock.parentNode;
+            const button = document.createElement('button');
+            button.className = 'copy-code-btn';
+            button.textContent = 'Copy';
+            button.onclick = () => {
+                navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                    showToast('Copied to clipboard!', 'success', 2000);
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    showToast('Failed to copy code', 'error');
+                });
+            };
+            pre.style.position = 'relative'; // Ensure position for absolute button
+            pre.appendChild(button);
+        });
     }
 
     // WebSocket connection management
@@ -476,7 +553,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedTools = getSelectedTools();
             const requestBody = { 
                 content: message,
-                tools: selectedTools
+                tools: selectedTools,
+                llm_name: llmSelect.value
             };
 
             const response = await fetch(`/chat/${sessionId}/message`, {
@@ -548,6 +626,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Fetch application settings
+    async function fetchAppSettings() {
+        try {
+            const response = await fetch('/data/app_settings');
+            if (response.ok) {
+                const data = await response.json();
+                const appName = data.app_name || 'Chat App';
+                if (appTitle) appTitle.textContent = appName;
+                if (sidebarAppName) sidebarAppName.textContent = appName;
+                if (headerAppName) headerAppName.textContent = appName;
+                if (welcomeTitle) welcomeTitle.textContent = `Welcome to ${appName} Chat`;
+            } else {
+                console.error('Failed to fetch app settings');
+            }
+        } catch (error) {
+            console.error('Error fetching app settings:', error);
+        }
+    }
 
     // Handle page visibility changes
     document.addEventListener('visibilitychange', () => {

@@ -8,8 +8,14 @@ from app.services.tool_manager import tool_manager
 from app.config import settings
 import app.main
 import os
+from fastapi.responses import StreamingResponse, JSONResponse, FileResponse
+from datetime import datetime
 
 router = APIRouter()
+
+@router.get("/llms")
+async def get_llms():
+    return llm_client.get_available_llms()
 
 @router.post("/chat")
 def create_chat_session(request: Request):
@@ -17,11 +23,48 @@ def create_chat_session(request: Request):
     session_id = session_manager.create_session(user_email)
     return {"session_id": session_id}
 
+@router.get("/chat/{session_id}/download")
+async def download_chat_session(session_id: str):
+    session = session_manager.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    chat_history = session.get("messages", [])
+    selected_tools = session.get("selected_tools", [])
+
+    # Format the chat history
+    formatted_content = f"Chat Session ID: {session_id}\n"
+    formatted_content += f"Timestamp: {datetime.now().isoformat()}\n"
+    formatted_content += f"Selected LLM: {llm_client.current_llm_name}\n"
+    formatted_content += f"Selected Tools: {', '.join(selected_tools) if selected_tools else 'None'}\n\n"
+
+    for msg in chat_history:
+        role = msg.get("role", "unknown").capitalize()
+        content = msg.get("content", "")
+        formatted_content += f"{role}: {content}\n\n"
+
+    # Create a temporary file to store the content
+    file_name = f"chat_session_{session_id}.txt"
+    file_path = os.path.join("logs", file_name) # Using logs directory for temporary storage
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(formatted_content)
+
+    return FileResponse(path=file_path, filename=file_name, media_type="text/plain")
+
 @router.post("/chat/{session_id}/message")
 async def chat_message(session_id: str, request: Request, message: dict):
     session = session_manager.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+
+    llm_name = message.get("llm_name")
+    if llm_name:
+        try:
+            llm_client.set_llm(llm_name)
+            log_session_event(session_id, {"event": "llm_changed", "llm_name": llm_name})
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid LLM selection: {e}")
 
     if settings.disable_llm_calls:
         return {"response": "LLM calls are disabled."}
@@ -66,6 +109,7 @@ async def chat_message(session_id: str, request: Request, message: dict):
     
     # Get selected tools from the request, or use all tools if none specified
     selected_tool_names = message.get("tools", [])
+    session_manager.update_session_tools(session_id, selected_tool_names)
     if selected_tool_names:
         # Filter tools to only include selected ones
         all_tools = tool_manager.get_all_tool_definitions()
