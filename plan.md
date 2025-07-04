@@ -342,6 +342,49 @@ DISABLE_LLM_CALLS=false
    - Generate formatted text file from session data
    - Handle file download through browser
 
+### Phase 12: Production Deployment & CI/CD
+
+1. **GitHub Actions CI/CD Pipeline**:
+   - Create comprehensive `.github/workflows/deploy.yml` workflow
+   - Implement multi-stage pipeline: test → build → deploy
+   - Add automated testing on pull requests and main branch pushes
+   - Configure matrix testing across multiple Python versions (3.11, 3.12)
+
+2. **Container Registry & Image Management**:
+   - Set up automated Docker image builds on GitHub Actions
+   - Push images to GitHub Container Registry (ghcr.io)
+   - Implement semantic versioning for container tags
+   - Create both `latest` and version-specific tags
+   - Add image vulnerability scanning with Trivy or similar
+
+3. **Production-Ready Container Configuration**:
+   - Optimize Dockerfile for production (multi-stage builds, minimal base image)
+   - Add health check endpoints for container orchestration
+   - Configure proper logging for containerized environments
+   - Set up non-root user execution for security
+   - Add graceful shutdown handling
+
+4. **Integration Testing Pipeline**:
+   - Create end-to-end integration tests that run against deployed containers
+   - Test full chat workflows including tool execution
+   - Validate WebSocket connections and streaming responses
+   - Test authentication middleware in containerized environment
+   - Add database migration and initialization testing
+
+5. **Deployment Automation**:
+   - Set up automated deployment to staging environment on main branch
+   - Implement blue-green deployment strategy for zero-downtime updates
+   - Add rollback capabilities for failed deployments
+   - Configure environment-specific configuration management
+   - Set up monitoring and alerting for deployment health
+
+6. **Infrastructure as Code**:
+   - Create Docker Compose files for different environments (dev, staging, prod)
+   - Add Kubernetes manifests for container orchestration
+   - Configure ingress controllers and load balancers
+   - Set up persistent volume claims for logs and data
+   - Add horizontal pod autoscaling configuration
+
 ### Updated Environment Variables
 
 ```env

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  app:
+    image: ghcr.io/your-github-username/chat-data-mcp-tools-ui:latest
+    ports:
+      - "80:8000"
+    environment:
+      - APP_NAME=Production Galaxy Chat
+      - LLM_CONFIG_FILE=/app/config/llms.yml
+      - TEST_MODE=False
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == worker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

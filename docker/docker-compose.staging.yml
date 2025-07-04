@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  app:
+    image: ghcr.io/your-github-username/chat-data-mcp-tools-ui:staging
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=Staging Galaxy Chat
+      - LLM_CONFIG_FILE=/app/config/llms.yml
+      - TEST_MODE=False
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure

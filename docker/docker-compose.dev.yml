@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - APP_NAME=Dev Galaxy Chat
+      - LLM_CONFIG_FILE=/app/config/llms.yml
+      - TEST_MODE=True
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
