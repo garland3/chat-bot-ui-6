@@ -5,32 +5,165 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Data MCP Tools</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <div class="chat-window">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-robot"></i>
+                    <span>MCP Tools</span>
+                </div>
+                <button class="new-chat-btn" id="newChatBtn">
+                    <i class="fas fa-plus"></i>
+                    <span>New Chat</span>
+                </button>
+            </div>
+            
+            <div class="chat-history">
+                <div class="chat-history-item active">
+                    <i class="fas fa-message"></i>
+                    <span>Current Chat</span>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">User</span>
+                        <span class="user-email">test@example.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="main-content">
+            <!-- Header -->
             <div class="chat-header">
-                <h1>Chat Data MCP Tools</h1>
-                <span class="status-indicator" id="statusIndicator"></span>
+                <div class="header-left">
+                    <h1>Chat Data MCP Tools</h1>
+                    <div class="connection-status">
+                        <div class="status-indicator" id="statusIndicator"></div>
+                        <span class="status-text" id="statusText">Connecting...</span>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="tool-selector">
+                        <div class="tool-selector-header">
+                            <i class="fas fa-tools"></i>
+                            <span>Available Tools</span>
+                            <button class="tool-toggle-btn" id="toolToggleBtn" title="Toggle tool selection">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div class="tool-panel" id="toolPanel">
+                            <div class="tool-checkboxes">
+                                <label class="tool-checkbox">
+                                    <input type="checkbox" id="BasicMathTool" value="BasicMathTool">
+                                    <span class="checkmark"></span>
+                                    <span class="tool-label">📊 Basic Math</span>
+                                </label>
+                                <label class="tool-checkbox">
+                                    <input type="checkbox" id="CodeExecutionTool" value="CodeExecutionTool">
+                                    <span class="checkmark"></span>
+                                    <span class="tool-label">💻 Code Execution</span>
+                                </label>
+                                <label class="tool-checkbox">
+                                    <input type="checkbox" id="UserLookupTool" value="UserLookupTool">
+                                    <span class="checkmark"></span>
+                                    <span class="tool-label">👤 User Lookup</span>
+                                </label>
+                                <label class="tool-checkbox">
+                                    <input type="checkbox" id="SQLQueryTool" value="SQLQueryTool">
+                                    <span class="checkmark"></span>
+                                    <span class="tool-label">🗃️ SQL Query</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="chat-messages" id="chatMessages"></div>
-            <div class="chat-input">
-                <input type="text" id="messageInput" placeholder="Type your message...">
-                <button id="sendMessageBtn">Send</button>
-            </div>
-            <div class="tool-selection">
-                <label for="toolSelect">Select Tool:</label>
-                <select id="toolSelect">
-                    <option value="none">None</option>
-                    <option value="BasicMathTool">Basic Math</option>
-                    <option value="CodeExecutionTool">Code Execution</option>
-                    <option value="UserLookupTool">User Lookup</option>
-                    <option value="SQLQueryTool">SQL Query</option>
-                </select>
+
+            <!-- Chat Messages -->
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="welcome-message">
+                        <div class="welcome-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h2>Welcome to MCP Tools Chat</h2>
+                        <p>I'm your AI assistant with access to various tools and data sources. How can I help you today?</p>
+                        <div class="suggested-prompts">
+                            <button class="prompt-suggestion" data-prompt="Calculate 15% of 250">
+                                <i class="fas fa-calculator"></i>
+                                Calculate 15% of 250
+                            </button>
+                            <button class="prompt-suggestion" data-prompt="Look up user information">
+                                <i class="fas fa-search"></i>
+                                Look up user information
+                            </button>
+                            <button class="prompt-suggestion" data-prompt="Execute a simple Python script">
+                                <i class="fas fa-code"></i>
+                                Execute a simple Python script
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <div class="input-field">
+                            <textarea 
+                                id="messageInput" 
+                                placeholder="Message MCP Tools..." 
+                                rows="1"
+                                maxlength="4000"
+                            ></textarea>
+                            <button class="send-button" id="sendMessageBtn" disabled title="Send message">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="input-footer">
+                            <div class="character-count">
+                                <span id="charCount">0</span>/4000
+                            </div>
+                            <div class="input-actions">
+                                <button class="action-btn" id="attachBtn" title="Attach file">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <button class="action-btn" id="micBtn" title="Voice input">
+                                    <i class="fas fa-microphone"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Processing your request...</p>
+        </div>
+    </div>
+
     <script src="/static/app.js"></script>
 </body>
 </html>

@@ -25,7 +25,16 @@ async def chat_message(session_id: str, request: Request, message: dict):
         return {"response": "LLM calls are disabled."}
 
     messages = [{"role": "user", "content": message.get("content", "")}]
-    available_tools = tool_manager.get_all_tool_definitions()
+    
+    # Get selected tools from the request, or use all tools if none specified
+    selected_tool_names = message.get("tools", [])
+    if selected_tool_names:
+        # Filter tools to only include selected ones
+        all_tools = tool_manager.get_all_tool_definitions()
+        available_tools = [tool for tool in all_tools if tool["function"]["name"] in selected_tool_names]
+    else:
+        # No tools selected, don't provide any tools to the LLM
+        available_tools = []
 
     try:
         # First call to LLM to check for tool calls (not streaming initially)
@@ -81,21 +90,22 @@ async def chat_message(session_id: str, request: Request, message: dict):
                             continue
             return StreamingResponse(generate_tool_response(), media_type="text/event-stream")
         else:
-            # If not a tool call, stream the content directly
+            # If not a tool call, stream the response directly
             def generate_llm_response():
-                # Yield content from the first non-streaming response
-                if response_message.get("content"):
-                    yield response_message["content"]
-                # Re-call LLM with streaming enabled for the actual response
+                # Make a streaming call directly instead of using the non-streaming response
                 for chunk in llm_client.chat_completion(messages=messages, stream=True):
                     if chunk.startswith(b'data:'):
                         chunk = chunk[len(b'data:'):].strip()
                     if chunk == b'[DONE]':
                         break
                     if chunk:
-                        data = json.loads(chunk)
-                        content = data["choices"][0]["delta"].get("content", "")
-                        yield content
+                        try:
+                            data = json.loads(chunk)
+                            content = data["choices"][0]["delta"].get("content", "")
+                            yield content
+                        except json.JSONDecodeError as e:
+                            print(f"JSONDecodeError in generate_llm_response: {e} for chunk: {chunk}")
+                            continue
             return StreamingResponse(generate_llm_response(), media_type="text/event-stream")
 
     except Exception as e:

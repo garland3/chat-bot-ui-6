@@ -2,6 +2,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
+    llm_provider: str = "openai"  # "openai" or "anthropic"
     llm_base_url: str = "https://api.openai.com/v1"
     llm_api_key: str = "your-api-key"
     llm_model_name: str = "gpt-3.5-turbo"
