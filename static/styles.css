@@ -333,25 +333,7 @@ body {
     border-color: var(--border-medium);
 }
 
-.tool-toggle-btn {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: var(--space-1);
-    border-radius: 4px;
-    transition: all var(--transition-fast);
-    margin-left: var(--space-2);
-}
 
-.tool-toggle-btn:hover {
-    background-color: var(--bg-hover);
-    color: var(--text-primary);
-}
-
-.tool-toggle-btn.open {
-    transform: rotate(180deg);
-}
 
 .tool-panel {
     position: absolute;

@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const attachBtn = document.getElementById('attachBtn');
     const micBtn = document.getElementById('micBtn');
     const toolToggleBtn = document.getElementById('toolToggleBtn');
+    console.log('toolToggleBtn element:', toolToggleBtn); // Debug log to check if element is found
     const toolPanel = document.getElementById('toolPanel');
 
     // Application State
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event Listeners Setup
     function setupEventListeners() {
+        console.log('Setting up event listeners...'); // Debug log
         // Send message events
         sendMessageBtn.addEventListener('click', handleSendMessage);
         messageInput.addEventListener('keydown', handleKeyDown);
@@ -57,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Tool panel toggle
-        toolToggleBtn.addEventListener('click', handleToolToggle);
+        toolToggleBtn.addEventListener('click', (e) => { handleToolToggle(e); }); // Modified to anonymous function
         
         // Tool checkbox changes
         document.addEventListener('change', (e) => {
@@ -128,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle tool panel toggle
     function handleToolToggle(e) {
+        console.log('handleToolToggle called'); // Debug log
         e.stopPropagation();
         const isOpen = toolPanel.classList.contains('open');
         if (isOpen) {
@@ -139,12 +142,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Open tool panel
     function openToolPanel() {
+        console.log('openToolPanel called'); // Debug log
         toolPanel.classList.add('open');
         toolToggleBtn.classList.add('open');
     }
 
     // Close tool panel
     function closeToolPanel() {
+        console.log('closeToolPanel called'); // Debug log
         toolPanel.classList.remove('open');
         toolToggleBtn.classList.remove('open');
     }
