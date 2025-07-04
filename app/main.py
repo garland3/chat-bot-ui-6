@@ -6,7 +6,7 @@ from starlette.responses import HTMLResponse
 from starlette.routing import Mount
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.middleware.auth import AuthMiddleware
-from app.routers import chat, websocket, data, llm_configs
+from app.routers import chat, websocket, data, llm_configs, theme
 from app.services.llm_client import llm_client
 from app.config import settings
 import os
@@ -82,6 +82,7 @@ app.include_router(chat.router)
 app.include_router(websocket.router)
 app.include_router(data.router)
 app.include_router(llm_configs.router)
+app.include_router(theme.router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -93,20 +94,9 @@ def health_check():
 def test_auth(request: Request):
     return {"user_email": request.state.user_email}
 
-import json
-
-@app.get("/{full_path:path}", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 async def serve_frontend():
     with open("static/index.html", "r", encoding="utf-8") as f:
         html_content = f.read()
     
-    # Inject dynamic configuration values
-    html_content = html_content.replace(
-        "appName: \"Chat Data MCP Tools\"",
-        f"appName: {json.dumps(settings.app_name)}"
-    )
-    html_content = html_content.replace(
-        "llmConfigFile: \"config/llms.yml\"",
-        f"llmConfigFile: {json.dumps(settings.llm_config_file)}"
-    )
     return html_content

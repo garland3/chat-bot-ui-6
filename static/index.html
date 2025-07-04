@@ -3,166 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="appTitle">Chat Data MCP Tools</title>
-    <script id="config-script">
-        window.appConfig = {
-            appName: "Chat Data MCP Tools",
-            llmConfigFile: "config/llms.yml"
-        };
-    </script>
+    <title>Galaxy Chat</title>
     <link rel="stylesheet" href="/static/styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
 </head>
 <body>
     <div class="app-container">
-        <!-- Main Chat Area -->
-        <div class="main-content">
-            <!-- Header -->
-            <div class="chat-header">
-                <div class="header-left">
-                    <h1>Chat Data MCP Tools</h1>
-                    <div class="connection-status">
-                        <div class="status-indicator" id="statusIndicator"></div>
-                        <span class="status-text" id="statusText"></span>
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 class="app-title">Galaxy Chat</h1>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span class="status-text" id="statusText">Connecting...</span>
+                </div>
+            </div>
+            
+            <div class="header-controls">
+                <button class="btn btn-primary" id="newChatBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    New Chat
+                </button>
+                
+                <div class="dropdown" id="toolsDropdown">
+                    <button class="btn btn-secondary dropdown-toggle" id="toolsBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                        </svg>
+                        Tools
+                        <span class="selected-count" id="toolsCount">0</span>
+                    </button>
+                    <div class="dropdown-menu" id="toolsMenu">
+                        <div class="dropdown-header">Select Tools</div>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="tools" value="basic_math" id="tool-basic-math">
+                            <span class="checkmark"></span>
+                            Basic Math
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="tools" value="code_execution" id="tool-code-execution">
+                            <span class="checkmark"></span>
+                            Code Execution
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="tools" value="user_lookup" id="tool-user-lookup">
+                            <span class="checkmark"></span>
+                            User Lookup
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="tools" value="sql_query" id="tool-sql-query">
+                            <span class="checkmark"></span>
+                            SQL Query
+                        </label>
                     </div>
                 </div>
                 
-                <div class="header-center">
-                    <button class="new-chat-btn" id="newChatBtn">
-                        <i class="fas fa-plus"></i>
-                        <span>New Chat</span>
+                <div class="dropdown" id="llmDropdown">
+                    <button class="btn btn-secondary dropdown-toggle" id="llmBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+                        </svg>
+                        Model
+                        <span class="selected-model" id="selectedModel">Loading...</span>
                     </button>
+                    <div class="dropdown-menu" id="llmMenu">
+                        <div class="dropdown-header">Select AI Model</div>
+                        <!-- Models will be populated dynamically -->
+                    </div>
                 </div>
                 
-                <div class="header-right">
-                    <div class="tool-selector">
-                        <div class="tool-selector-header" id="toolToggleBtn" title="Toggle tool selection">
-                            <i class="fas fa-tools"></i>
-                            <span>Available Tools</span>
-                            <i class="fas fa-chevron-down tool-toggle-icon"></i>
-                        </div>
-                        <div class="tool-panel" id="toolPanel">
-                            <div class="tool-checkboxes">
-                                <label class="tool-checkbox">
-                                    <input type="checkbox" id="BasicMathTool" value="BasicMathTool">
-                                    <span class="checkmark"></span>
-                                    <span class="tool-label">📊 Basic Math</span>
-                                </label>
-                                <label class="tool-checkbox">
-                                    <input type="checkbox" id="CodeExecutionTool" value="CodeExecutionTool">
-                                    <span class="checkmark"></span>
-                                    <span class="tool-label">💻 Code Execution</span>
-                                </label>
-                                <label class="tool-checkbox">
-                                    <input type="checkbox" id="UserLookupTool" value="UserLookupTool">
-                                    <span class="checkmark"></span>
-                                    <span class="tool-label">👤 User Lookup</span>
-                                </label>
-                                <label class="tool-checkbox">
-                                    <input type="checkbox" id="SQLQueryTool" value="SQLQueryTool">
-                                    <span class="checkmark"></span>
-                                    <span class="tool-label">🗃️ SQL Query</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="llm-selector">
-                        <select id="llmSelect" class="llm-select action-btn" title="Select AI Model">
-                            <!-- Options will be loaded dynamically by JavaScript -->
-                        </select>
-                    </div>
-                    <button class="action-btn" id="downloadChatBtn" title="Download Chat Session">
-                        <i class="fas fa-download"></i>
-                    </button>
-                    <div class="user-info">
-                        <div class="user-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="user-details">
-                            <span class="user-name">User</span>
-                            <span class="user-email">test@example.com</span>
+                <button class="btn btn-secondary" id="downloadBtn" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7,10 12,15 17,10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Download
+                </button>
+                
+                <div class="user-info" id="userInfo">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span id="userEmail">Loading...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Chat Area -->
+            <div class="chat-container" id="chatContainer">
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-content">
+                        <h2>Welcome to Galaxy Chat</h2>
+                        <p>Start a conversation with AI. Select tools and a model, then ask anything!</p>
+                        <div class="suggested-prompts">
+                            <button class="prompt-suggestion" data-prompt="What can you help me with?">
+                                What can you help me with?
+                            </button>
+                            <button class="prompt-suggestion" data-prompt="Help me write some code">
+                                Help me write some code
+                            </button>
                         </div>
                     </div>
+                </div>
+                
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Messages will be added here dynamically -->
                 </div>
             </div>
 
-            <!-- Chat Messages -->
-            <div class="chat-container">
-                <div class="chat-messages" id="chatMessages">
-                    <div class="welcome-message">
-                        <div class="welcome-icon">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <h2>Welcome to MCP Tools Chat</h2>
-                        <p>I'm your AI assistant with access to various tools and data sources. How can I help you today?</p>
-                        <div class="suggested-prompts">
-                            <button class="prompt-suggestion" data-prompt="Calculate 15% of 250">
-                                <i class="fas fa-calculator"></i>
-                                Calculate 15% of 250
-                            </button>
-                            <button class="prompt-suggestion" data-prompt="Look up user information">
-                                <i class="fas fa-search"></i>
-                                Look up user information
-                            </button>
-                            <button class="prompt-suggestion" data-prompt="Execute a simple Python script">
-                                <i class="fas fa-code"></i>
-                                Execute a simple Python script
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Input Area -->
+            <!-- Input Section -->
+            <div class="input-section">
                 <div class="input-container">
                     <div class="input-wrapper">
-                        <div class="input-field">
-                            <textarea 
-                                id="messageInput" 
-                                placeholder="Your message here" 
-                                rows="1"
-                                maxlength="4000"
-                            ></textarea>
-                            <button class="action-btn attach-btn-large" id="attachBtn" title="Attach file">
-                                <i class="fas fa-paperclip"></i>
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Type your message here... (Press Enter to send, Shift+Enter for new line)"
+                            rows="3"
+                            maxlength="4000"
+                        ></textarea>
+                        <div class="input-actions">
+                            <button class="btn-icon" id="attachBtn" title="Attach file (coming soon)" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.49"/>
+                                </svg>
                             </button>
-                            <button class="send-button" id="sendMessageBtn" disabled title="Send message">
-                                <i class="fas fa-paper-plane"></i>
+                            <button class="btn btn-primary" id="sendBtn" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+                                </svg>
+                                Send
                             </button>
                         </div>
-                        <div class="input-footer">
-                        </div>
+                    </div>
+                    <div class="input-info">
+                        <span class="typing-indicator" id="typingIndicator" style="display: none;">
+                            AI is typing...
+                        </span>
                     </div>
                 </div>
             </div>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Processing your request...</p>
+            </div>
         </div>
+
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer">
+            <!-- Toast notifications will be added here -->
+        </div>
+
     </div>
 
-    <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner">
-            <div class="spinner"></div>
-            <p>Processing your request...</p>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Debug Panel -->
-    <div id="debug-panel" style="position: fixed; bottom: 10px; left: 10px; width: 400px; height: 250px; background: rgba(0, 0, 0, 0.8); color: white; padding: 10px; z-index: 9999; font-family: monospace; font-size: 12px; border-radius: 8px; display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-            <h3 style="margin: 0; color: #0f0;">Debug Log</h3>
-            <button onclick="document.getElementById('debug-panel').style.display = 'none';" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">&times;</button>
-        </div>
-        <textarea id="debug-content" style="width: 100%; height: calc(100% - 40px); background: #333; color: #0f0; border: 1px solid #0f0; padding: 5px; box-sizing: border-box; resize: none;" readonly></textarea>
-        <button onclick="document.getElementById('debug-content').value = '';" style="background: #555; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-top: 5px;">Clear Log</button>
-        <button onclick="document.getElementById('debug-content').select(); document.execCommand('copy');" style="background: #555; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-top: 5px; margin-left: 5px;">Copy All</button>
-    </div>
-
+    <!-- Configuration Script -->
+    <script>
+        window.appConfig = {
+            appName: 'Galaxy Chat',
+            backgroundColor: '#0f0f23',
+            wsUrl: `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`,
+            apiBaseUrl: '',
+            enableDebug: true
+        };
+    </script>
+    
     <script src="/static/app.js"></script>
 </body>
 </html>

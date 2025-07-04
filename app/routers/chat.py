@@ -60,8 +60,19 @@ async def chat_message(session_id: str, request: Request, message: dict):
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    llm_name = message.get("llm_name")
-    if llm_name:
+    # Handle LLM configuration from the request
+    llm_config = message.get("llm_config")
+    llm_name = message.get("llm_name")  # Legacy support
+    
+    if llm_config:
+        # New format with full config object
+        try:
+            llm_client.set_llm(llm_config.get("name"))
+            log_session_event(session_id, {"event": "llm_changed", "llm_config": llm_config})
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid LLM selection: {e}")
+    elif llm_name:
+        # Legacy format with just name
         try:
             llm_client.set_llm(llm_name)
             log_session_event(session_id, {"event": "llm_changed", "llm_name": llm_name})

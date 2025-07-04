@@ -24,6 +24,3 @@ async def get_data(data_source_name: str, request: Request):
     else:
         raise HTTPException(status_code=404, detail="Data source not found")
 
-@router.get("/app_settings")
-async def get_app_settings():
-    return {"app_name": settings.app_name}

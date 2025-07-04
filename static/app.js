@@ -1,692 +1,943 @@
-// Enhanced Chat Application JavaScript
-document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements
-    const messageInput = document.getElementById('messageInput');
-    const sendMessageBtn = document.getElementById('sendMessageBtn');
-    const chatMessages = document.getElementById('chatMessages');
-    const statusIndicator = document.getElementById('statusIndicator');
-    const statusText = document.getElementById('statusText');
-    const toastContainer = document.getElementById('toastContainer');
-    const newChatBtn = document.getElementById('newChatBtn');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const attachBtn = document.getElementById('attachBtn');
-    const toolToggleBtn = document.getElementById('toolToggleBtn');
-    const toolPanel = document.getElementById('toolPanel');
-    const appTitle = document.getElementById('appTitle');
-    const headerAppName = document.querySelector('.chat-header .header-left h1');
-    const welcomeTitle = document.querySelector('.welcome-message h2');
-    const llmSelect = document.getElementById('llmSelect');
-    const downloadChatBtn = document.getElementById('downloadChatBtn');
-
-    // Application State
-    let sessionId = null;
-    let ws = null;
-    let isConnected = false;
-    let isTyping = false;
-    let currentStreamingMessage = null;
-
-    // Initialize the application
-    init();
-
-    // Debug Panel Initialization
-    const debugPanel = document.getElementById('debug-panel');
-    const debugContent = document.getElementById('debug-content');
-    const originalConsoleLog = console.log;
-
-    console.log = function(...args) {
-        originalConsoleLog.apply(console, args);
-        if (debugContent) {
-            debugContent.value += `[LOG] ${args.join(' ')}\n`;
-            debugContent.scrollTop = debugContent.scrollHeight;
-        }
-    };
-
-    console.error = function(...args) {
-        originalConsoleLog.apply(console, args);
-        if (debugContent) {
-            debugContent.value += `[ERROR] ${args.join(' ')}\n`;
-            debugContent.scrollTop = debugContent.scrollHeight;
-        }
-    };
-
-    console.warn = function(...args) {
-        originalConsoleLog.apply(console, args);
-        if (debugContent) {
-            debugContent.value += `[WARN] ${args.join(' ')}\n`;
-            debugContent.scrollTop = debugContent.scrollHeight;
-        }
-    };
-
-    async function init() {
-        console.log('init(): Application initialization started.');
-        setupEventListeners();
-        setupTextareaAutoResize();
-        await fetchAppSettings();
-        await fetchLLMs();
-        console.log('init(): Connecting WebSocket immediately...');
-        connectWebSocket(); // Connect WebSocket immediately
-        updateSendButtonState();
-        console.log('init(): Application initialization finished.');
+// Application State
+class AppState {
+    constructor() {
+        this.ws = null;
+        this.sessionId = null;
+        this.isConnected = false;
+        this.isTyping = false;
+        this.currentStreamingMessage = null;
+        this.selectedTools = new Set();
+        this.selectedLLM = null;
+        this.availableLLMs = [];
+        this.userEmail = null;
+        this.messageHistory = [];
+        this.debugMode = window.appConfig?.enableDebug || false;
     }
+}
 
-    // Event Listeners Setup
-    function setupEventListeners() {
-        console.log('Setting up event listeners...'); // Debug log
-        // Send message events
-        sendMessageBtn.addEventListener('click', handleSendMessage);
-        messageInput.addEventListener('keydown', handleKeyDown);
-        messageInput.addEventListener('input', handleInputChange);
+// Global state instance
+const appState = new AppState();
 
-        // New chat button
-        newChatBtn.addEventListener('click', handleNewChat);
+// DOM Elements
+const elements = {
+    // Header elements
+    connectionStatus: document.getElementById('connectionStatus'),
+    statusIndicator: document.getElementById('statusIndicator'),
+    statusText: document.getElementById('statusText'),
+    newChatBtn: document.getElementById('newChatBtn'),
+    toolsDropdown: document.getElementById('toolsDropdown'),
+    toolsBtn: document.getElementById('toolsBtn'),
+    toolsMenu: document.getElementById('toolsMenu'),
+    toolsCount: document.getElementById('toolsCount'),
+    llmDropdown: document.getElementById('llmDropdown'),
+    llmBtn: document.getElementById('llmBtn'),
+    llmMenu: document.getElementById('llmMenu'),
+    selectedModel: document.getElementById('selectedModel'),
+    downloadBtn: document.getElementById('downloadBtn'),
+    userInfo: document.getElementById('userInfo'),
+    userEmail: document.getElementById('userEmail'),
+    
+    // Chat elements
+    chatContainer: document.getElementById('chatContainer'),
+    welcomeScreen: document.getElementById('welcomeScreen'),
+    messagesContainer: document.getElementById('messagesContainer'),
+    
+    // Input elements
+    messageInput: document.getElementById('messageInput'),
+    attachBtn: document.getElementById('attachBtn'),
+    sendBtn: document.getElementById('sendBtn'),
+    typingIndicator: document.getElementById('typingIndicator'),
+    
+    // UI elements
+    loadingOverlay: document.getElementById('loadingOverlay'),
+    toastContainer: document.getElementById('toastContainer')
+};
 
-        // Suggested prompts
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('prompt-suggestion') || e.target.closest('.prompt-suggestion')) {
-                const button = e.target.classList.contains('prompt-suggestion') ? e.target : e.target.closest('.prompt-suggestion');
-                const prompt = button.getAttribute('data-prompt');
-                if (prompt) {
-                    messageInput.value = prompt;
-                    updateSendButtonState();
-                    messageInput.focus();
-                }
-            }
-        });
-
-        // Tool panel toggle
-        toolToggleBtn.addEventListener('click', (e) => { handleToolToggle(e); }); // Modified to anonymous function
-        
-        // Tool checkbox changes
-        document.addEventListener('change', (e) => {
-            if (e.target.type === 'checkbox' && e.target.closest('.tool-checkboxes')) {
-                handleToolSelectionChange();
-            }
-        });
-
-        // Close tool panel when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.tool-selector')) {
-                closeToolPanel();
-            }
-        });
-
-        // Action buttons (placeholder functionality)
-        attachBtn.addEventListener('click', () => {
-            showToast('File attachment coming soon!', 'info');
-        });
-
-        // LLM selection change
-        llmSelect.addEventListener('change', handleLLMSelectionChange);
-
-        // Download chat button
-        downloadChatBtn.addEventListener('click', handleDownloadChat);
-    }
-
-    // Textarea auto-resize functionality
-    function setupTextareaAutoResize() {
-        messageInput.addEventListener('input', () => {
-            messageInput.style.height = 'auto';
-            messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
-        });
-    }
-
-    // Handle keyboard events
-    function handleKeyDown(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
-        }
-    }
-
-    // Handle input changes
-    function handleInputChange() {
-        updateSendButtonState();
-    }
-
-    // Update send button state
-    function updateSendButtonState() {
-        const hasText = messageInput.value.trim().length > 0;
-        const isNotTooLong = messageInput.value.length <= 4000;
-        sendMessageBtn.disabled = !hasText || !isNotTooLong || isTyping;
-    }
-
-    // Handle tool panel toggle
-    function handleToolToggle(e) {
-        console.log('handleToolToggle called'); // Debug log
-        e.stopPropagation();
-        const isOpen = toolPanel.classList.contains('open');
-        if (isOpen) {
-            closeToolPanel();
-        } else {
-            openToolPanel();
-        }
-    }
-
-    // Open tool panel
-    function openToolPanel() {
-        console.log('openToolPanel called'); // Debug log
-        toolPanel.classList.add('open');
-        toolToggleBtn.classList.add('open');
-    }
-
-    // Close tool panel
-    function closeToolPanel() {
-        console.log('closeToolPanel called'); // Debug log
-        toolPanel.classList.remove('open');
-        toolToggleBtn.classList.remove('open');
-    }
-
-    // Handle tool selection changes
-    function handleToolSelectionChange() {
-        const selectedTools = getSelectedTools();
-        const count = selectedTools.length;
-        
-        if (count > 0) {
-            showToast(`Selected ${count} tool${count > 1 ? 's' : ''}: ${selectedTools.join(', ')}`, 'info');
-        } else {
-            showToast('No tools selected', 'info');
-        }
-    }
-
-    // Get selected tools
-    function getSelectedTools() {
-        const checkboxes = document.querySelectorAll('.tool-checkboxes input[type="checkbox"]:checked');
-        return Array.from(checkboxes).map(cb => cb.value);
-    }
-
-    // Handle LLM selection change
-    function handleLLMSelectionChange() {
-        const selectedLLM = llmSelect.value;
-        showToast(`Selected LLM: ${selectedLLM}`, 'info');
-    }
-
-    // Fetch available LLMs and populate dropdown
-    async function fetchLLMs() {
-        try {
-            const response = await fetch('/api/llm_configs');
-            if (response.ok) {
-                const llmConfigs = await response.json();
-                llmSelect.innerHTML = ''; // Clear existing options
-                
-                // Add default placeholder option
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Select AI Model';
-                defaultOption.disabled = true;
-                llmSelect.appendChild(defaultOption);
-                
-                llmConfigs.forEach(llmConfig => {
-                    const option = document.createElement('option');
-                    option.value = llmConfig.name;
-                    option.textContent = llmConfig.name;
-                    llmSelect.appendChild(option);
-                });
-                
-                // Set first LLM as default if available
-                if (llmConfigs.length > 0) {
-                    llmSelect.value = llmConfigs[0].name;
-                    showToast(`Selected AI Model: ${llmConfigs[0].name}`, 'info', 2000);
-                } else {
-                    llmSelect.value = '';
-                }
-            } else {
-                console.error('Failed to fetch LLMs');
-                showToast('Failed to load LLM options', 'error');
-            }
-        } catch (error) {
-            console.error('Error fetching LLMs:', error);
-            showToast('Error loading LLM options', 'error');
-        }
-    }
-
-    // Handle new chat creation
-    function handleNewChat() {
-        // For now, directly start new chat without confirmation
-        // In the future, could implement a proper modal confirmation
-        clearChat();
-        createChatSession();
-        showToast('Starting new chat session...', 'info');
-    }
-
-    // Handle download chat session
-    function handleDownloadChat() {
-        if (sessionId) {
-            window.open(`/chat/${sessionId}/download`, '_blank');
-        }
-        else {
-            showToast('No active session to download.', 'warning');
-        }
-    }
-
-    // Clear chat messages
-    function clearChat() {
-        // Clear existing content
-        chatMessages.innerHTML = '';
-        
-        // Create welcome message structure
-        const welcomeDiv = document.createElement('div');
-        welcomeDiv.className = 'welcome-message';
-        
-        // Welcome icon
-        const iconDiv = document.createElement('div');
-        iconDiv.className = 'welcome-icon';
-        const robotIcon = document.createElement('i');
-        robotIcon.className = 'fas fa-robot';
-        iconDiv.appendChild(robotIcon);
-        
-        // Welcome title
-        const title = document.createElement('h2');
-        title.textContent = 'Welcome to MCP Tools Chat';
-        
-        // Welcome description
-        const description = document.createElement('p');
-        description.textContent = "I'm your AI assistant with access to various tools and data sources. How can I help you today?";
-        
-        // Suggested prompts container
-        const promptsDiv = document.createElement('div');
-        promptsDiv.className = 'suggested-prompts';
-        
-        // Create prompt buttons
-        const prompts = [
-            { text: 'Calculate 15% of 250', icon: 'fas fa-calculator' },
-            { text: 'Look up user information', icon: 'fas fa-search' },
-            { text: 'Execute a simple Python script', icon: 'fas fa-code' }
-        ];
-        
-        prompts.forEach(prompt => {
-            const button = document.createElement('button');
-            button.className = 'prompt-suggestion';
-            button.setAttribute('data-prompt', prompt.text);
-            
-            const icon = document.createElement('i');
-            icon.className = prompt.icon;
-            
-            button.appendChild(icon);
-            button.appendChild(document.createTextNode(prompt.text));
-            promptsDiv.appendChild(button);
-        });
-        
-        // Assemble welcome message
-        welcomeDiv.appendChild(iconDiv);
-        welcomeDiv.appendChild(title);
-        welcomeDiv.appendChild(description);
-        welcomeDiv.appendChild(promptsDiv);
-        
-        chatMessages.appendChild(welcomeDiv);
-    }
-
-    // Toast notification system
-    function showToast(message, type = 'info', duration = 4000) {
-        const toast = document.createElement('div');
-        toast.classList.add('toast', type);
-        
-        // Create container div
-        const container = document.createElement('div');
-        container.style.display = 'flex';
-        container.style.alignItems = 'center';
-        container.style.gap = '8px';
-        
-        // Add icon based on type
-        const icon = document.createElement('i');
-        icon.className = getToastIcon(type);
-        
-        // Add message span
-        const messageSpan = document.createElement('span');
-        messageSpan.textContent = message;
-        
-        container.appendChild(icon);
-        container.appendChild(messageSpan);
-        toast.appendChild(container);
-        
-        toastContainer.appendChild(toast);
-
-        // Trigger animation
-        requestAnimationFrame(() => {
-            toast.classList.add('show');
-        });
-
-        // Auto remove
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-            }, 250);
-        }, duration);
-    }
-
-    function getToastIcon(type) {
-        switch (type) {
-            case 'success': return 'fas fa-check-circle';
-            case 'error': return 'fas fa-exclamation-circle';
-            case 'warning': return 'fas fa-exclamation-triangle';
-            default: return 'fas fa-info-circle';
-        }
-    }
-
-    // Add message to chat
-    function addMessage(content, sender, isStreaming = false) {
-        // Remove welcome message if it exists
-        const welcomeMessage = chatMessages.querySelector('.welcome-message');
-        if (welcomeMessage) {
-            welcomeMessage.remove();
-        }
-
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', sender);
-        
-        const messageContent = document.createElement('div');
-        messageContent.classList.add('message-content');
-        
-        if (isStreaming) {
-            messageContent.textContent = content;
-            const cursor = document.createElement('span');
-            cursor.className = 'typing-cursor';
-            cursor.textContent = '|';
-            messageContent.appendChild(cursor);
-            currentStreamingMessage = messageContent;
-        } else {
-            messageContent.innerHTML = marked.parse(content);
-            addCopyButtonsToCodeBlocks(messageContent);
-        }
-        
-        messageDiv.appendChild(messageContent);
-        chatMessages.appendChild(messageDiv);
-        
-        // Scroll to bottom
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        return messageContent;
-    }
-
-    // Update streaming message
-    function updateStreamingMessage(content) {
-        if (currentStreamingMessage) {
-            // Clear existing content
-            currentStreamingMessage.textContent = content;
-            
-            // Add typing cursor as a separate element
-            const cursor = document.createElement('span');
-            cursor.className = 'typing-cursor';
-            cursor.textContent = '|';
-            currentStreamingMessage.appendChild(cursor);
-            
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-    }
-
-    // Finish streaming message
-    function finishStreamingMessage(content) {
-        if (currentStreamingMessage) {
-            currentStreamingMessage.innerHTML = marked.parse(content);
-            addCopyButtonsToCodeBlocks(currentStreamingMessage);
-            currentStreamingMessage = null;
-        }
-    }
-
-    // Add copy buttons to code blocks
-    function addCopyButtonsToCodeBlocks(element) {
-        element.querySelectorAll('pre > code').forEach(codeBlock => {
-            const pre = codeBlock.parentNode;
-            const button = document.createElement('button');
-            button.className = 'copy-code-btn';
-            button.textContent = 'Copy';
-            button.onclick = () => {
-                navigator.clipboard.writeText(codeBlock.textContent).then(() => {
-                    showToast('Copied to clipboard!', 'success', 2000);
-                }).catch(err => {
-                    console.error('Failed to copy: ', err);
-                    showToast('Failed to copy code', 'error');
-                });
+// Utility Functions
+const utils = {
+    formatTime: (date = new Date()) => {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    },
+    
+    escapeHtml: (text) => {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+    
+    generateId: () => {
+        return Math.random().toString(36).substr(2, 9);
+    },
+    
+    debounce: (func, wait) => {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
             };
-            pre.style.position = 'relative'; // Ensure position for absolute button
-            pre.appendChild(button);
-        });
-    }
-
-    // WebSocket connection management
-    function connectWebSocket() {
-        console.log(`connectWebSocket(): Attempting to connect WebSocket.`);
-        if (ws) {
-            console.log('connectWebSocket(): Existing WebSocket found, closing it.');
-            ws.close();
-        }
-
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`; // Connect to generic /ws initially
-        console.log(`connectWebSocket(): WebSocket URL: ${wsUrl}`);
-        
-        ws = new WebSocket(wsUrl);
-
-        ws.onopen = () => {
-            isConnected = true;
-            statusIndicator.classList.add('connected');
-            statusText.textContent = 'Connected';
-            showToast('Connected to chat server', 'success');
-            console.log('connectWebSocket(): WebSocket connection opened.');
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
         };
+    },
+    
+    copyToClipboard: async (text) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('Copied to clipboard', 'success');
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            showToast('Failed to copy text', 'error');
+        }
+    }
+};
 
-        ws.onmessage = (event) => {
+// Toast Notification System
+function showToast(message, type = 'info', duration = 5000) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const toastId = utils.generateId();
+    toast.innerHTML = `
+        <div class="toast-header">
+            <span class="toast-title">${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+            <button class="toast-close" onclick="removeToast('${toastId}')">&times;</button>
+        </div>
+        <div class="toast-body">${message}</div>
+    `;
+    
+    toast.id = toastId;
+    elements.toastContainer.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Auto remove
+    setTimeout(() => removeToast(toastId), duration);
+}
+
+function removeToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (toast) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 250);
+    }
+}
+
+// Debug Functions
+function updateDebugInfo() {
+    // Debug info now only in console
+    if (!appState.debugMode) return;
+    
+    console.log('Debug Info:', {
+        connected: appState.isConnected,
+        sessionId: appState.sessionId,
+        wsReadyState: appState.ws?.readyState,
+        selectedTools: Array.from(appState.selectedTools),
+        selectedLLM: appState.selectedLLM,
+        messageCount: appState.messageHistory.length
+    });
+}
+
+function debugThemeColors() {
+    if (!appState.debugMode) return;
+    
+    const root = document.documentElement;
+    const computedStyle = getComputedStyle(root);
+    
+    console.log('=== THEME DEBUG INFO ===');
+    console.log('Applied CSS Custom Properties (via style.setProperty):');
+    const appliedProps = {
+        '--bg-primary': root.style.getPropertyValue('--bg-primary'),
+        '--bg-secondary': root.style.getPropertyValue('--bg-secondary'),
+        '--bg-tertiary': root.style.getPropertyValue('--bg-tertiary'),
+        '--bg-hover': root.style.getPropertyValue('--bg-hover'),
+        '--bg-active': root.style.getPropertyValue('--bg-active'),
+        '--accent-primary': root.style.getPropertyValue('--accent-primary'),
+        '--accent-secondary': root.style.getPropertyValue('--accent-secondary'),
+        '--text-primary': root.style.getPropertyValue('--text-primary'),
+        '--text-secondary': root.style.getPropertyValue('--text-secondary'),
+        '--text-muted': root.style.getPropertyValue('--text-muted'),
+        '--text-accent': root.style.getPropertyValue('--text-accent'),
+        '--border-color': root.style.getPropertyValue('--border-color')
+    };
+    Object.entries(appliedProps).forEach(([prop, value]) => {
+        console.log(`  ${prop}: ${value || 'NOT SET'}`);
+    });
+    
+    console.log('Computed CSS Values (what browser actually uses):');
+    const computedProps = {
+        '--bg-primary': computedStyle.getPropertyValue('--bg-primary').trim(),
+        '--bg-secondary': computedStyle.getPropertyValue('--bg-secondary').trim(),
+        '--bg-tertiary': computedStyle.getPropertyValue('--bg-tertiary').trim(),
+        '--bg-hover': computedStyle.getPropertyValue('--bg-hover').trim(),
+        '--bg-active': computedStyle.getPropertyValue('--bg-active').trim(),
+        '--accent-primary': computedStyle.getPropertyValue('--accent-primary').trim(),
+        '--accent-secondary': computedStyle.getPropertyValue('--accent-secondary').trim(),
+        '--text-primary': computedStyle.getPropertyValue('--text-primary').trim(),
+        '--text-secondary': computedStyle.getPropertyValue('--text-secondary').trim(),
+        '--text-muted': computedStyle.getPropertyValue('--text-muted').trim(),
+        '--text-accent': computedStyle.getPropertyValue('--text-accent').trim(),
+        '--border-color': computedStyle.getPropertyValue('--border-color').trim()
+    };
+    Object.entries(computedProps).forEach(([prop, value]) => {
+        console.log(`  ${prop}: ${value || 'NOT FOUND'}`);
+    });
+    console.log('========================');
+}
+
+// Connection Management
+function initializeWebSocket() {
+    const wsUrl = window.appConfig.wsUrl;
+    
+    try {
+        appState.ws = new WebSocket(wsUrl);
+        
+        appState.ws.onopen = () => {
+            console.log('WebSocket connected');
+            appState.isConnected = true;
+            updateConnectionStatus();
+            updateDebugInfo();
+        };
+        
+        appState.ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 handleWebSocketMessage(data);
             } catch (error) {
-                console.log('WebSocket message (text):', event.data);
+                console.error('Error parsing WebSocket message:', error);
             }
         };
-
-        ws.onclose = (event) => {
-            isConnected = false;
-            statusIndicator.classList.remove('connected');
-            statusText.textContent = 'Disconnected';
-            console.log(`connectWebSocket(): WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason}`);
+        
+        appState.ws.onclose = (event) => {
+            console.log('WebSocket disconnected:', event.code, event.reason);
+            appState.isConnected = false;
+            updateConnectionStatus();
+            updateDebugInfo();
             
-            if (event.code !== 1000) { // Not a normal closure
-                console.log('connectWebSocket(): Abnormal closure, attempting to reconnect in 3 seconds...');
-                showToast('Connection lost. Attempting to reconnect...', 'warning');
-                setTimeout(() => {
-                    connectWebSocket(); // Reconnect without session ID
-                }, 3000);
-            }
+            // Attempt to reconnect after 3 seconds
+            setTimeout(() => {
+                if (!appState.isConnected) {
+                    console.log('Attempting to reconnect...');
+                    initializeWebSocket();
+                }
+            }, 3000);
         };
-
-        ws.onerror = (error) => {
-            console.error('connectWebSocket(): WebSocket error:', error);
+        
+        appState.ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
             showToast('Connection error occurred', 'error');
         };
-    }
-
-    // Handle WebSocket messages
-    function handleWebSocketMessage(data) {
-        switch (data.type) {
-            case 'session_id':
-                sessionId = data.session_id;
-                console.log(`WebSocket received session_id: ${sessionId}`);
-                showToast(`Session ID received: ${sessionId}`, 'success');
-                // After receiving session ID, create chat session if not already created
-                if (!sessionId) {
-                    createChatSession();
-                }
-                break;
-            case 'status':
-                showToast(data.message, 'info');
-                break;
-            case 'thinking':
-                showToast('AI is thinking...', 'info', 2000);
-                break;
-            case 'tool_call':
-                showToast(`Using tool: ${data.tool_name}`, 'info');
-                break;
-            case 'error':
-                showToast(data.message, 'error');
-                break;
-            default:
-                console.log('Unknown WebSocket message type:', data);
-        }
-    }
-
-    // Create new chat session
-    async function createChatSession() {
-        console.log('createChatSession(): Attempting to create new chat session.');
-        try {
-            showLoading(true);
-            statusText.textContent = 'Creating session...';
-            
-            const response = await fetch('/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-EMAIL-USER': 'test@example.com' // This should be replaced with actual auth
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
-                sessionId = data.session_id;
-                console.log(`createChatSession(): Session created successfully. Session ID: ${sessionId}`);
-                showToast(`New session created`, 'success');
-                // Send session_id to backend via WebSocket if connected
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({ type: 'session_init', session_id: sessionId }));
-                }
-            } else {
-                console.error(`createChatSession(): Failed to create session. Status: ${response.status}, Detail: ${data.detail}`);
-                throw new Error(data.detail || 'Failed to create session');
-            }
-        } catch (error) {
-            console.error('createChatSession(): Error creating chat session:', error);
-            showToast(`Failed to create session: ${error.message}`, 'error');
-            statusText.textContent = 'Connection failed';
-        } finally {
-            showLoading(false);
-            console.log('createChatSession(): Finished session creation attempt.');
-        }
-    }
-
-    // Send message handler
-    async function handleSendMessage() {
-        const message = messageInput.value.trim();
-        if (!message || isTyping) return;
-
-        // Add user message to chat
-        addMessage(message, 'user');
         
-        // Clear input and reset
-        messageInput.value = '';
-        messageInput.style.height = 'auto';
-        updateSendButtonState();
+    } catch (error) {
+        console.error('Failed to initialize WebSocket:', error);
+        showToast('Failed to connect to server', 'error');
+    }
+}
 
-        // Check session
-        if (!sessionId) {
-            showToast('No active session. Creating one...', 'info');
-            await createChatSession();
-            if (!sessionId) {
-                showToast('Could not create session. Message not sent.', 'error');
-                return;
-            }
-        }
-
-        try {
-            isTyping = true;
-            updateSendButtonState();
+function handleWebSocketMessage(data) {
+    if (appState.debugMode) {
+        console.log('WebSocket message received:', data);
+    }
+    
+    switch (data.type) {
+        case 'session_id':
+            appState.sessionId = data.session_id;
+            elements.downloadBtn.disabled = false;
+            updateDebugInfo();
+            break;
             
-            const selectedTools = getSelectedTools();
-            const requestBody = { 
-                content: message,
-                tools: selectedTools,
-                llm_name: llmSelect.value
-            };
-
-            const response = await fetch(`/chat/${sessionId}/message`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-EMAIL-USER': 'test@example.com' // This should be replaced with actual auth
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (response.ok) {
-                await handleStreamingResponse(response);
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Failed to send message');
-            }
-        } catch (error) {
-            console.error('Error sending message:', error);
-            showToast(`Error: ${error.message}`, 'error');
-            addMessage('Sorry, I encountered an error processing your message. Please try again.', 'assistant');
-        } finally {
-            isTyping = false;
-            updateSendButtonState();
-        }
+        case 'status':
+            handleStatusMessage(data);
+            break;
+            
+        case 'thinking':
+            handleThinkingMessage(data);
+            break;
+            
+        case 'tool_call':
+            handleToolCallMessage(data);
+            break;
+            
+        case 'message_start':
+            handleMessageStart(data);
+            break;
+            
+        case 'message_chunk':
+            handleMessageChunk(data);
+            break;
+            
+        case 'message_complete':
+            handleMessageComplete(data);
+            break;
+            
+        case 'error':
+            handleErrorMessage(data);
+            break;
+            
+        default:
+            console.log('Unknown message type:', data.type);
     }
+}
 
-    // Handle streaming response
-    async function handleStreamingResponse(response) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let botResponse = '';
-        let messageElement = null;
-
-        try {
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                botResponse += chunk;
-
-                // Create or update the message element
-                if (!messageElement) {
-                    messageElement = addMessage(botResponse, 'assistant', true);
-                } else {
-                    updateStreamingMessage(botResponse);
-                }
-            }
-
-            // Finish streaming
-            if (messageElement) {
-                finishStreamingMessage(botResponse);
-            }
-        } catch (error) {
-            console.error('Error reading stream:', error);
-            if (messageElement) {
-                finishStreamingMessage(botResponse || 'Error receiving response');
-            }
-        }
+function handleStatusMessage(data) {
+    if (data.status === 'typing') {
+        setTypingIndicator(true);
+    } else if (data.status === 'complete') {
+        setTypingIndicator(false);
     }
+}
 
-    // Loading overlay control
-    function showLoading(show) {
-        if (show) {
-            loadingOverlay.classList.add('show');
+function handleThinkingMessage(data) {
+    // Show thinking indicator or update existing one
+    showToast(`AI is thinking: ${data.message}`, 'info', 3000);
+}
+
+function handleToolCallMessage(data) {
+    // Add tool call indicator to the current streaming message
+    if (appState.currentStreamingMessage) {
+        addToolCallToMessage(appState.currentStreamingMessage, data);
+    }
+}
+
+function handleMessageStart(data) {
+    const messageElement = createMessageElement('assistant', '', true);
+    elements.messagesContainer.appendChild(messageElement);
+    appState.currentStreamingMessage = messageElement;
+    hideWelcomeScreen();
+    scrollToBottom();
+}
+
+function handleMessageChunk(data) {
+    if (appState.currentStreamingMessage) {
+        const bubble = appState.currentStreamingMessage.querySelector('.message-bubble');
+        const currentContent = bubble.textContent || '';
+        bubble.textContent = currentContent + (data.content || '');
+        scrollToBottom();
+    }
+}
+
+function handleMessageComplete(data) {
+    if (appState.currentStreamingMessage) {
+        const bubble = appState.currentStreamingMessage.querySelector('.message-bubble');
+        
+        // Convert markdown to HTML
+        if (data.content) {
+            bubble.innerHTML = marked.parse(data.content);
+            addCopyButtonsToCodeBlocks(bubble);
+        }
+        
+        // Remove streaming class
+        appState.currentStreamingMessage.classList.remove('streaming');
+        appState.currentStreamingMessage = null;
+        
+        // Add to message history
+        appState.messageHistory.push({
+            role: 'assistant',
+            content: data.content,
+            timestamp: new Date()
+        });
+    }
+    
+    setTypingIndicator(false);
+    enableInput();
+    scrollToBottom();
+}
+
+function handleErrorMessage(data) {
+    showToast(data.message || 'An error occurred', 'error');
+    setTypingIndicator(false);
+    enableInput();
+    
+    if (appState.currentStreamingMessage) {
+        const bubble = appState.currentStreamingMessage.querySelector('.message-bubble');
+        bubble.innerHTML = '<em>Sorry, an error occurred while processing your message.</em>';
+        appState.currentStreamingMessage.classList.remove('streaming');
+        appState.currentStreamingMessage = null;
+    }
+}
+
+function updateConnectionStatus() {
+    if (appState.isConnected) {
+        elements.statusIndicator.className = 'status-indicator connected';
+        elements.statusText.textContent = 'Connected';
+    } else {
+        elements.statusIndicator.className = 'status-indicator disconnected';
+        elements.statusText.textContent = 'Disconnected';
+    }
+}
+
+// Session Management
+async function createNewSession() {
+    try {
+        showLoading(true);
+        
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        appState.sessionId = data.session_id;
+        
+        // Clear chat
+        clearChat();
+        elements.downloadBtn.disabled = false;
+        
+        showToast('New chat session started', 'success');
+        
+    } catch (error) {
+        console.error('Error creating new session:', error);
+        showToast('Failed to create new session', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Message Handling
+async function sendMessage(content) {
+    if (!content.trim() || !appState.sessionId) return;
+    
+    try {
+        disableInput();
+        
+        // Add user message to UI
+        const userMessage = createMessageElement('user', content);
+        elements.messagesContainer.appendChild(userMessage);
+        appState.messageHistory.push({
+            role: 'user',
+            content: content,
+            timestamp: new Date()
+        });
+        
+        hideWelcomeScreen();
+        scrollToBottom();
+        
+        // Send message to backend
+        const response = await fetch(`/chat/${appState.sessionId}/message`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: content,
+                tools: Array.from(appState.selectedTools),
+                llm_config: appState.selectedLLM
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Response will come through WebSocket
+        setTypingIndicator(true);
+        
+    } catch (error) {
+        console.error('Error sending message:', error);
+        showToast('Failed to send message', 'error');
+        enableInput();
+    }
+}
+
+function createMessageElement(role, content, isStreaming = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}${isStreaming ? ' streaming' : ''}`;
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.textContent = role === 'user' ? 'U' : 'AI';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    
+    if (content) {
+        if (role === 'assistant') {
+            bubble.innerHTML = marked.parse(content);
+            addCopyButtonsToCodeBlocks(bubble);
         } else {
-            loadingOverlay.classList.remove('show');
+            bubble.textContent = content;
         }
     }
+    
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'message-time';
+    timeDiv.textContent = utils.formatTime();
+    
+    contentDiv.appendChild(bubble);
+    contentDiv.appendChild(timeDiv);
+    
+    messageDiv.appendChild(avatar);
+    messageDiv.appendChild(contentDiv);
+    
+    return messageDiv;
+}
 
-    // Fetch application settings
-    async function fetchAppSettings() {
-        const appName = window.appConfig.appName || 'Chat App';
-        if (appTitle) appTitle.textContent = appName;
-        if (headerAppName) headerAppName.textContent = appName;
-        if (welcomeTitle) welcomeTitle.textContent = `Welcome to ${appName} Chat`;
+function addCopyButtonsToCodeBlocks(container) {
+    const codeBlocks = container.querySelectorAll('pre code');
+    codeBlocks.forEach(codeBlock => {
+        const pre = codeBlock.parentElement;
+        if (pre.querySelector('.code-copy-btn')) return; // Already has button
+        
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'code-copy-btn';
+        copyBtn.textContent = 'Copy';
+        copyBtn.onclick = () => utils.copyToClipboard(codeBlock.textContent);
+        
+        pre.style.position = 'relative';
+        pre.appendChild(copyBtn);
+    });
+}
+
+function addToolCallToMessage(messageElement, toolData) {
+    const contentDiv = messageElement.querySelector('.message-content');
+    const bubble = contentDiv.querySelector('.message-bubble');
+    
+    const toolCall = document.createElement('div');
+    toolCall.className = 'tool-call';
+    toolCall.innerHTML = `
+        <div class="tool-call-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+            Using ${toolData.tool_name}
+        </div>
+        <div class="tool-call-content">${utils.escapeHtml(JSON.stringify(toolData.arguments, null, 2))}</div>
+    `;
+    
+    contentDiv.insertBefore(toolCall, bubble);
+}
+
+function setTypingIndicator(show) {
+    appState.isTyping = show;
+    elements.typingIndicator.style.display = show ? 'block' : 'none';
+}
+
+function hideWelcomeScreen() {
+    elements.welcomeScreen.style.display = 'none';
+}
+
+function clearChat() {
+    elements.messagesContainer.innerHTML = '';
+    elements.welcomeScreen.style.display = 'flex';
+    appState.messageHistory = [];
+    appState.currentStreamingMessage = null;
+    setTypingIndicator(false);
+}
+
+function scrollToBottom() {
+    elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
+}
+
+// Input Management
+function enableInput() {
+    elements.messageInput.disabled = false;
+    elements.sendBtn.disabled = elements.messageInput.value.trim() === '';
+    elements.messageInput.focus();
+}
+
+function disableInput() {
+    elements.messageInput.disabled = true;
+    elements.sendBtn.disabled = true;
+}
+
+
+function autoResizeTextarea() {
+    const textarea = elements.messageInput;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+}
+
+// Tool Management
+function updateToolsDisplay() {
+    elements.toolsCount.textContent = appState.selectedTools.size;
+    
+    // Update checkboxes
+    const checkboxes = elements.toolsMenu.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = appState.selectedTools.has(checkbox.value);
+    });
+}
+
+function toggleTool(toolName) {
+    if (appState.selectedTools.has(toolName)) {
+        appState.selectedTools.delete(toolName);
+    } else {
+        appState.selectedTools.add(toolName);
     }
+    updateToolsDisplay();
+    updateDebugInfo();
+}
 
-    // Handle page visibility changes
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && sessionId && !isConnected) {
-            connectWebSocket(sessionId);
+// LLM Management
+async function loadLLMConfigs() {
+    try {
+        console.log('Loading LLM configs from /api/llm_configs...');
+        const response = await fetch('/api/llm_configs');
+        console.log('LLM configs response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('LLM configs data received:', data);
+        
+        // Handle different possible response structures
+        if (Array.isArray(data)) {
+            appState.availableLLMs = data;
+        } else if (data.llms && Array.isArray(data.llms)) {
+            appState.availableLLMs = data.llms;
+        } else {
+            console.error('Unexpected LLM config response structure:', data);
+            appState.availableLLMs = [];
+        }
+        
+        console.log('Available LLMs:', appState.availableLLMs);
+        
+        // Set default LLM if none selected
+        if (appState.availableLLMs.length > 0 && !appState.selectedLLM) {
+            appState.selectedLLM = appState.availableLLMs[0];
+            console.log('Selected default LLM:', appState.selectedLLM);
+        }
+        
+        updateLLMDisplay();
+        
+    } catch (error) {
+        console.error('Error loading LLM configs:', error);
+        showToast('Failed to load AI models', 'error');
+        elements.selectedModel.textContent = 'Error loading models';
+    }
+}
+
+function updateLLMDisplay() {
+    // Update selected model display
+    if (appState.selectedLLM) {
+        elements.selectedModel.textContent = appState.selectedLLM.name;
+    } else {
+        elements.selectedModel.textContent = 'No model selected';
+    }
+    
+    // Update dropdown menu
+    elements.llmMenu.innerHTML = '<div class="dropdown-header">Select AI Model</div>';
+    
+    appState.availableLLMs.forEach(llm => {
+        const item = document.createElement('div');
+        item.className = `radio-item${appState.selectedLLM?.name === llm.name ? ' selected' : ''}`;
+        item.textContent = llm.name;
+        item.onclick = () => selectLLM(llm);
+        elements.llmMenu.appendChild(item);
+    });
+}
+
+function selectLLM(llm) {
+    appState.selectedLLM = llm;
+    updateLLMDisplay();
+    closeDropdown(elements.llmDropdown);
+    updateDebugInfo();
+}
+
+// User Info
+async function loadUserInfo() {
+    try {
+        // User info comes from backend authentication
+        // For now, we'll use a placeholder
+        appState.userEmail = 'user@example.com';
+        elements.userEmail.textContent = appState.userEmail;
+    } catch (error) {
+        console.error('Error loading user info:', error);
+        elements.userEmail.textContent = 'Unknown user';
+    }
+}
+
+// Download Chat
+async function downloadChat() {
+    if (!appState.sessionId) {
+        showToast('No active session to download', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/chat/${appState.sessionId}/download`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chat-${appState.sessionId}-${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showToast('Chat downloaded successfully', 'success');
+        
+    } catch (error) {
+        console.error('Error downloading chat:', error);
+        showToast('Failed to download chat', 'error');
+    }
+}
+
+// UI Utilities
+function showLoading(show) {
+    elements.loadingOverlay.style.display = show ? 'flex' : 'none';
+}
+
+function toggleDropdown(dropdown) {
+    const isActive = dropdown.classList.contains('active');
+    
+    // Close all dropdowns
+    document.querySelectorAll('.dropdown.active').forEach(d => {
+        d.classList.remove('active');
+    });
+    
+    // Toggle current dropdown
+    if (!isActive) {
+        dropdown.classList.add('active');
+    }
+}
+
+function closeDropdown(dropdown) {
+    dropdown.classList.remove('active');
+}
+
+function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown.active').forEach(d => {
+        d.classList.remove('active');
+    });
+}
+
+// Event Listeners
+function setupEventListeners() {
+    // Header controls
+    elements.newChatBtn.addEventListener('click', createNewSession);
+    elements.downloadBtn.addEventListener('click', downloadChat);
+    
+    // Dropdown toggles
+    elements.toolsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDropdown(elements.toolsDropdown);
+    });
+    
+    elements.llmBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDropdown(elements.llmDropdown);
+    });
+    
+    // Tool selection
+    elements.toolsMenu.addEventListener('click', (e) => {
+        if (e.target.type === 'checkbox') {
+            toggleTool(e.target.value);
+        }
+        e.stopPropagation();
+    });
+    
+    // Message input
+    elements.messageInput.addEventListener('input', () => {
+        autoResizeTextarea();
+        elements.sendBtn.disabled = elements.messageInput.value.trim() === '' || elements.messageInput.disabled;
+    });
+    
+    elements.messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (!elements.sendBtn.disabled) {
+                const content = elements.messageInput.value.trim();
+                elements.messageInput.value = '';
+                autoResizeTextarea();
+                sendMessage(content);
+            }
         }
     });
-
-    // Handle window beforeunload
-    window.addEventListener('beforeunload', () => {
-        if (ws) {
-            ws.close(1000, 'Page unloading');
+    
+    elements.sendBtn.addEventListener('click', () => {
+        const content = elements.messageInput.value.trim();
+        elements.messageInput.value = '';
+        autoResizeTextarea();
+        sendMessage(content);
+    });
+    
+    // Suggested prompts
+    elements.welcomeScreen.addEventListener('click', (e) => {
+        if (e.target.classList.contains('prompt-suggestion')) {
+            const prompt = e.target.dataset.prompt;
+            elements.messageInput.value = prompt;
+            autoResizeTextarea();
+            elements.messageInput.focus();
         }
     });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', closeAllDropdowns);
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+Enter for new chat
+        if (e.ctrlKey && e.key === 'Enter') {
+            createNewSession();
+        }
+        
+        // Escape to close dropdowns
+        if (e.key === 'Escape') {
+            closeAllDropdowns();
+        }
+    });
+}
+
+// Theme Management
+async function loadThemeConfig() {
+    try {
+        console.log('Loading theme config from /api/theme/config...');
+        const response = await fetch('/api/theme/config');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const themeConfig = await response.json();
+        console.log('Theme config received:', themeConfig);
+        
+        // Apply theme configuration to document title and app name
+        if (themeConfig.app_name) {
+            document.title = themeConfig.app_name;
+            const appTitle = document.querySelector('.app-title');
+            if (appTitle) {
+                appTitle.textContent = themeConfig.app_name;
+            }
+            const welcomeTitle = document.querySelector('.welcome-content h2');
+            if (welcomeTitle) {
+                welcomeTitle.textContent = `Welcome to ${themeConfig.app_name}`;
+            }
+        }
+        
+        // Apply color configuration to CSS custom properties
+        const root = document.documentElement;
+        if (themeConfig.background_color) {
+            root.style.setProperty('--bg-primary', themeConfig.background_color);
+        }
+        if (themeConfig.accent_primary) {
+            root.style.setProperty('--accent-primary', themeConfig.accent_primary);
+            root.style.setProperty('--text-accent', themeConfig.accent_primary);
+        }
+        if (themeConfig.accent_secondary) {
+            root.style.setProperty('--accent-secondary', themeConfig.accent_secondary);
+        }
+        if (themeConfig.bg_secondary) {
+            root.style.setProperty('--bg-secondary', themeConfig.bg_secondary);
+        }
+        if (themeConfig.bg_tertiary) {
+            root.style.setProperty('--bg-tertiary', themeConfig.bg_tertiary);
+        }
+        if (themeConfig.bg_hover) {
+            root.style.setProperty('--bg-hover', themeConfig.bg_hover);
+        }
+        if (themeConfig.bg_active) {
+            root.style.setProperty('--bg-active', themeConfig.bg_active);
+        }
+        if (themeConfig.text_primary) {
+            root.style.setProperty('--text-primary', themeConfig.text_primary);
+        }
+        if (themeConfig.text_secondary) {
+            root.style.setProperty('--text-secondary', themeConfig.text_secondary);
+        }
+        if (themeConfig.text_muted) {
+            root.style.setProperty('--text-muted', themeConfig.text_muted);
+        }
+        if (themeConfig.border_color) {
+            root.style.setProperty('--border-color', themeConfig.border_color);
+        }
+        
+        console.log('Theme configuration applied successfully');
+        
+        // Debug theme colors after applying them
+        if (appState.debugMode) {
+            debugThemeColors();
+        }
+        
+    } catch (error) {
+        console.error('Error loading theme config:', error);
+        showToast('Failed to load theme configuration', 'error');
+    }
+}
+
+// Initialization
+async function initialize() {
+    console.log('Initializing Galaxy Chat...');
+    
+    try {
+        // Setup event listeners
+        setupEventListeners();
+        
+        // Initialize WebSocket connection
+        initializeWebSocket();
+        
+        // Load initial data
+        await Promise.all([
+            loadThemeConfig(),
+            loadLLMConfigs(),
+            loadUserInfo()
+        ]);
+        
+        // Debug theme colors after loading
+        debugThemeColors();
+        
+        // Create initial session
+        await createNewSession();
+        
+        // Initialize UI state
+        updateToolsDisplay();
+        enableInput();
+        
+        console.log('Galaxy Chat initialized successfully');
+        
+    } catch (error) {
+        console.error('Error initializing application:', error);
+        showToast('Failed to initialize application', 'error');
+    }
+}
+
+// Start the application when DOM is loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+} else {
+    initialize();
+}
+
+// Global error handler
+window.addEventListener('error', (event) => {
+    console.error('Global error:', event.error);
+    if (appState.debugMode) {
+        showToast(`Error: ${event.error.message}`, 'error');
+    }
 });
+
+// Handle page visibility changes
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !appState.isConnected) {
+        console.log('Page became visible, attempting to reconnect...');
+        initializeWebSocket();
+    }
+});
+
+// Export for debugging
+if (appState.debugMode) {
+    window.appState = appState;
+    window.appUtils = utils;
+}
