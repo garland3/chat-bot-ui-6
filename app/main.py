@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 from starlette.routing import Mount
 from app.middleware.auth import AuthMiddleware
-from app.routers import chat, websocket
+from app.routers import chat, websocket, data
 from app.services.llm_client import llm_client
 from app.config import settings
 
@@ -30,6 +30,7 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(AuthMiddleware)
 app.include_router(chat.router)
 app.include_router(websocket.router)
+app.include_router(data.router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
