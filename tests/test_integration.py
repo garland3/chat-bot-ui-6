@@ -1,7 +1,9 @@
 from fastapi.testclient import TestClient
 from app.main import app
 from app.services.session_manager import session_manager
+from unittest.mock import patch, MagicMock
 import json
+import requests
 
 client = TestClient(app)
 
@@ -29,7 +31,32 @@ def test_full_chat_interaction_with_math_tool():
     session_manager.delete_session(session_id)
     assert session_manager.get_session(session_id) is None
 
-def test_full_chat_interaction_with_user_lookup_tool():
+@patch('app.services.llm_client.LLMClient.chat_completion')
+def test_full_chat_interaction_with_user_lookup_tool(mock_chat_completion):
+    # Mock the first LLM response (non-streaming, tool call)
+    mock_llm_response_tool_call = MagicMock(spec=requests.Response)
+    mock_llm_response_tool_call.json.return_value = {
+        "choices": [{
+            "message": {
+                "role": "assistant",
+                "tool_calls": [{
+                    "id": "call_user_lookup_123",
+                    "function": {
+                        "name": "UserLookupTool",
+                        "arguments": "{\"email\": \"jane.smith@example.com\"}"
+                    }
+                }]
+            }
+        }]
+    }
+
+    # Mock the second LLM response (after tool execution, streaming)
+    def mock_iter_lines_final():
+        yield b'data: {"choices": [{"delta": {"content": "I found the user information for jane.smith@example.com. Jane Smith is a Product Manager in the Product department."}}]}'
+        yield b'data: [DONE]'
+
+    mock_chat_completion.side_effect = [mock_llm_response_tool_call, mock_iter_lines_final()]
+
     # 1. Create a session
     response = client.post("/chat", headers={"X-EMAIL-USER": "integration_test_user@example.com"})
     assert response.status_code == 200
@@ -54,7 +81,32 @@ def test_full_chat_interaction_with_user_lookup_tool():
     session_manager.delete_session(session_id)
     assert session_manager.get_session(session_id) is None
 
-def test_full_chat_interaction_with_sql_query_tool():
+@patch('app.services.llm_client.LLMClient.chat_completion')
+def test_full_chat_interaction_with_sql_query_tool(mock_chat_completion):
+    # Mock the first LLM response (non-streaming, tool call)
+    mock_llm_response_tool_call = MagicMock(spec=requests.Response)
+    mock_llm_response_tool_call.json.return_value = {
+        "choices": [{
+            "message": {
+                "role": "assistant",
+                "tool_calls": [{
+                    "id": "call_sql_123",
+                    "function": {
+                        "name": "SQLQueryTool",
+                        "arguments": "{\"query\": \"SELECT * FROM customers\"}"
+                    }
+                }]
+            }
+        }]
+    }
+
+    # Mock the second LLM response (after tool execution, streaming)
+    def mock_iter_lines_final():
+        yield b'data: {"choices": [{"delta": {"content": "Here are all the customers: Alice Smith, Bob Johnson, and others from the database query results."}}]}'
+        yield b'data: [DONE]'
+
+    mock_chat_completion.side_effect = [mock_llm_response_tool_call, mock_iter_lines_final()]
+
     # 1. Create a session
     response = client.post("/chat", headers={"X-EMAIL-USER": "integration_test_sql@example.com"})
     assert response.status_code == 200

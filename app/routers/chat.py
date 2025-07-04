@@ -24,7 +24,14 @@ async def chat_message(session_id: str, request: Request, message: dict):
     if settings.disable_llm_calls:
         return {"response": "LLM calls are disabled."}
 
-    messages = [{"role": "user", "content": message.get("content", "")}]
+    session_messages = session.get("messages", [])
+    session_messages.append({"role": "user", "content": message.get("content", "")})
+
+    messages = list(session_messages) # Create a copy to send to LLM
+
+    # Add a system message to guide the LLM
+    system_message = {"role": "system", "content": "You are a helpful AI assistant with access to various tools. Use the available tools to answer questions or perform tasks. If a user asks a question that can be answered by a tool, use the tool. If you cannot answer a question with a tool, respond normally."}
+    messages.insert(0, system_message)
     
     # Get selected tools from the request, or use all tools if none specified
     selected_tool_names = message.get("tools", [])
@@ -33,15 +40,12 @@ async def chat_message(session_id: str, request: Request, message: dict):
         all_tools = tool_manager.get_all_tool_definitions()
         available_tools = [tool for tool in all_tools if tool["function"]["name"] in selected_tool_names]
     else:
-        # No tools selected, don't provide any tools to the LLM
-        available_tools = []
+        # No tools selected, provide all tools to the LLM
+        available_tools = tool_manager.get_all_tool_definitions()
 
     try:
         # First call to LLM to check for tool calls (not streaming initially)
-        print(f"Messages before first LLM call: {messages}")
-        print(f"Available tools: {available_tools}")
         llm_response = llm_client.chat_completion(messages=messages, tools=available_tools, stream=False)
-        print(f"First LLM response: {llm_response.json()}")
         response_message = llm_response.json()["choices"][0]["message"]
 
         # Check if the LLM wants to call a tool
@@ -72,9 +76,8 @@ async def chat_message(session_id: str, request: Request, message: dict):
             
             # Second call to LLM with tool output, this time streaming
             def generate_tool_response():
-                print(f"Messages before second LLM call: {messages}")
+                full_content = ""
                 for chunk in llm_client.chat_completion(messages=messages, tools=available_tools, stream=True):
-                    print(f"Chunk in generate_tool_response: {chunk}")
                     if chunk.startswith(b'data:'):
                         chunk = chunk[len(b'data:'):].strip()
                     if chunk == b'[DONE]':
@@ -82,16 +85,19 @@ async def chat_message(session_id: str, request: Request, message: dict):
                     if chunk:
                         try:
                             data = json.loads(chunk)
-                            print(f"Data in generate_tool_response: {data}")
                             content = data["choices"][0]["delta"].get("content", "")
+                            full_content += content
                             yield content
-                        except json.JSONDecodeError as e:
-                            print(f"JSONDecodeError in generate_tool_response: {e} for chunk: {chunk}")
+                        except json.JSONDecodeError:
                             continue
+                # Append LLM's response to session messages after streaming is complete
+                session_messages.append({"role": "assistant", "content": full_content})
+                session_manager.update_session_messages(session_id, session_messages)
             return StreamingResponse(generate_tool_response(), media_type="text/event-stream")
         else:
             # If not a tool call, stream the response directly
             def generate_llm_response():
+                full_content = ""
                 # Make a streaming call directly instead of using the non-streaming response
                 for chunk in llm_client.chat_completion(messages=messages, stream=True):
                     if chunk.startswith(b'data:'):
@@ -102,10 +108,13 @@ async def chat_message(session_id: str, request: Request, message: dict):
                         try:
                             data = json.loads(chunk)
                             content = data["choices"][0]["delta"].get("content", "")
+                            full_content += content
                             yield content
-                        except json.JSONDecodeError as e:
-                            print(f"JSONDecodeError in generate_llm_response: {e} for chunk: {chunk}")
+                        except json.JSONDecodeError:
                             continue
+                # Append LLM's response to session messages after streaming is complete
+                session_messages.append({"role": "assistant", "content": full_content})
+                session_manager.update_session_messages(session_id, session_messages)
             return StreamingResponse(generate_llm_response(), media_type="text/event-stream")
 
     except Exception as e:

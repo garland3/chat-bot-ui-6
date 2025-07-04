@@ -13,12 +13,16 @@ class SessionManager:
             return self.user_sessions[user_email]
 
         session_id = str(uuid.uuid4())
-        self.sessions[session_id] = {"user_email": user_email}
+        self.sessions[session_id] = {"user_email": user_email, "messages": []}
         self.user_sessions[user_email] = session_id
         return session_id
 
     def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         return self.sessions.get(session_id)
+
+    def update_session_messages(self, session_id: str, messages: list):
+        if session_id in self.sessions:
+            self.sessions[session_id]["messages"] = messages
 
     def delete_session(self, session_id: str):
         if session_id in self.sessions:

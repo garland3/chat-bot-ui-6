@@ -1,0 +1,6 @@
+fix: Make entire tool selector header clickable and update styles
+
+This commit refactors the tool selection UI to make the entire 'Available Tools' header clickable, improving user experience. It involves:
+- Modifying `static/index.html` to move the `toolToggleBtn` ID to the `tool-selector-header` div and adjust the chevron icon placement.
+- Updating `static/styles.css` to correctly apply rotation to the chevron icon based on the `tool-selector-header`'s 'open' class and removing obsolete `.tool-toggle-btn` styles.
+- Adding debug logs to `static/app.js` to verify event listener attachment and function calls.
