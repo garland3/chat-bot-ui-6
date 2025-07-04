@@ -1,10 +1,11 @@
 # Configuration
 $WaitTimeSeconds = 30
+$timeout = 20
 
 while ($true) {
     Clear-Host
     Write-Host "Test run at $(Get-Date)" -ForegroundColor Cyan
-    python -m pytest --timeout=30 -v
+    python -m pytest --timeout=$timeout -v
     Write-Host "`nNext run in $WaitTimeSeconds seconds... (Press Ctrl+C to stop)" -ForegroundColor Yellow
     
     # PowerShell native progress bar

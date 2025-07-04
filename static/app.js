@@ -8,14 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusText = document.getElementById('statusText');
     const toastContainer = document.getElementById('toastContainer');
     const newChatBtn = document.getElementById('newChatBtn');
-    const charCount = document.getElementById('charCount');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const attachBtn = document.getElementById('attachBtn');
-    const micBtn = document.getElementById('micBtn');
     const toolToggleBtn = document.getElementById('toolToggleBtn');
     const toolPanel = document.getElementById('toolPanel');
     const appTitle = document.getElementById('appTitle');
-    const sidebarAppName = document.querySelector('.sidebar-header .logo span');
     const headerAppName = document.querySelector('.chat-header .header-left h1');
     const welcomeTitle = document.querySelector('.welcome-message h2');
     const llmSelect = document.getElementById('llmSelect');
@@ -30,6 +27,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize the application
     init();
+
+    // Debug Panel Initialization
+    const debugPanel = document.getElementById('debug-panel');
+    const debugContent = document.getElementById('debug-content');
+    const originalConsoleLog = console.log;
+
+    console.log = function(...args) {
+        originalConsoleLog.apply(console, args);
+        if (debugContent) {
+            debugContent.value += `[LOG] ${args.join(' ')}\n`;
+            debugContent.scrollTop = debugContent.scrollHeight;
+        }
+    };
+
+    console.error = function(...args) {
+        originalConsoleLog.apply(console, args);
+        if (debugContent) {
+            debugContent.value += `[ERROR] ${args.join(' ')}\n`;
+            debugContent.scrollTop = debugContent.scrollHeight;
+        }
+    };
+
+    console.warn = function(...args) {
+        originalConsoleLog.apply(console, args);
+        if (debugContent) {
+            debugContent.value += `[WARN] ${args.join(' ')}\n`;
+            debugContent.scrollTop = debugContent.scrollHeight;
+        }
+    };
 
     async function init() {
         console.log('init(): Application initialization started.');
@@ -61,7 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const prompt = button.getAttribute('data-prompt');
                 if (prompt) {
                     messageInput.value = prompt;
-                    updateCharacterCount();
                     updateSendButtonState();
                     messageInput.focus();
                 }
@@ -90,10 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('File attachment coming soon!', 'info');
         });
 
-        micBtn.addEventListener('click', () => {
-            showToast('Voice input coming soon!', 'info');
-        });
-
         // LLM selection change
         llmSelect.addEventListener('change', handleLLMSelectionChange);
 
@@ -119,22 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle input changes
     function handleInputChange() {
-        updateCharacterCount();
         updateSendButtonState();
-    }
-
-    // Update character count display
-    function updateCharacterCount() {
-        const count = messageInput.value.length;
-        charCount.textContent = count;
-        
-        if (count > 3500) {
-            charCount.style.color = 'var(--accent-warning)';
-        } else if (count > 3800) {
-            charCount.style.color = 'var(--accent-error)';
-        } else {
-            charCount.style.color = 'var(--text-tertiary)';
-        }
     }
 
     // Update send button state
@@ -201,15 +207,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 const llmConfigs = await response.json();
                 llmSelect.innerHTML = ''; // Clear existing options
+                
+                // Add default placeholder option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select AI Model';
+                defaultOption.disabled = true;
+                llmSelect.appendChild(defaultOption);
+                
                 llmConfigs.forEach(llmConfig => {
                     const option = document.createElement('option');
                     option.value = llmConfig.name;
                     option.textContent = llmConfig.name;
                     llmSelect.appendChild(option);
                 });
-                // Optionally set a default or previously selected LLM
+                
+                // Set first LLM as default if available
                 if (llmConfigs.length > 0) {
-                    llmSelect.value = llmConfigs[0].name; // Set first as default
+                    llmSelect.value = llmConfigs[0].name;
+                    showToast(`Selected AI Model: ${llmConfigs[0].name}`, 'info', 2000);
+                } else {
+                    llmSelect.value = '';
                 }
             } else {
                 console.error('Failed to fetch LLMs');
@@ -223,17 +241,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle new chat creation
     function handleNewChat() {
-        if (confirm('Start a new chat? This will clear the current conversation.')) {
-            clearChat();
-            createChatSession();
-        }
+        // For now, directly start new chat without confirmation
+        // In the future, could implement a proper modal confirmation
+        clearChat();
+        createChatSession();
+        showToast('Starting new chat session...', 'info');
     }
 
     // Handle download chat session
     function handleDownloadChat() {
         if (sessionId) {
             window.open(`/chat/${sessionId}/download`, '_blank');
-        } else {
+        }
+        else {
             showToast('No active session to download.', 'warning');
         }
     }
@@ -556,7 +576,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear input and reset
         messageInput.value = '';
         messageInput.style.height = 'auto';
-        updateCharacterCount();
         updateSendButtonState();
 
         // Check session
@@ -653,7 +672,6 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchAppSettings() {
         const appName = window.appConfig.appName || 'Chat App';
         if (appTitle) appTitle.textContent = appName;
-        if (sidebarAppName) sidebarAppName.textContent = appName;
         if (headerAppName) headerAppName.textContent = appName;
         if (welcomeTitle) welcomeTitle.textContent = `Welcome to ${appName} Chat`;
     }

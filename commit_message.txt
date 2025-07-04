@@ -1,1 +1,12 @@
-Fix: Explicitly add contents:read permission to build-and-push-image job
+feat: Implement Phase 13 - WebSocket Connection & Configuration Fixes
+
+This commit addresses the following items from Phase 13 of the project plan:
+
+- **Immediate WebSocket Connection**: Modified frontend (static/app.js) to establish WebSocket connection immediately on page load. Updated backend (app/routers/websocket.py) to handle initial connection without a session ID and communicate the session ID via WebSocket. Removed 'Connecting...' indicator from frontend (static/index.html).
+- **UI Configuration Integration**: Verified that app_name and llm_config_file are correctly propagated from backend to frontend.
+- **Docker Configuration Fix**: Confirmed Dockerfile already uses uvicorn with single worker, no changes needed.
+
+Also includes fixes for:
+- Syntax error in CSPMiddleware in app/main.py.
+- Missing WebSocket import in app/services/session_manager.py.
+- Updated tests/test_websocket.py to reflect new WebSocket behavior and fix assertion.
