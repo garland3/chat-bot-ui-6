@@ -436,6 +436,23 @@ llms:
     model_name: "llama2"
 ```
 
+### Phase 13: WebSocket Connection & Configuration Fixes
+
+1. **Immediate WebSocket Connection**:
+   - Open WebSocket connection as soon as user loads the page
+   - Remove "connecting..." red status indicator
+   - Ensure seamless connection establishment on page load
+
+2. **UI Configuration Integration**:
+   - Propagate app_name and llm_config_file from backend config to frontend
+   - Display available models from config in UI dropdown
+   - Ensure configuration values reach the user interface properly
+
+3. **Docker Configuration Fix**:
+   - Update Dockerfile CMD to use `uvicorn` instead of `gunicorn`
+   - Set single worker configuration or remove worker specification
+   - Ensure proper ASGI server for WebSocket support
+
 ### Implementation Priority
 
 These new phases should be implemented after the original Phase 6 completion. Each phase builds upon the previous infrastructure while adding significant user experience improvements and advanced functionality.

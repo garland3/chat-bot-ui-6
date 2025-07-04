@@ -36,8 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
         setupTextareaAutoResize();
         await fetchAppSettings();
         await fetchLLMs();
-        createChatSession();
+        await createChatSession(); // Ensure session is created before connecting WS
+        if (sessionId) {
+            connectWebSocket(sessionId);
+        }
         updateSendButtonState();
+        // Remove initial 'Connecting...' status
+        statusIndicator.classList.add('connected');
+        statusText.textContent = 'Connected';
     }
 
     // Event Listeners Setup
@@ -194,19 +200,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch available LLMs and populate dropdown
     async function fetchLLMs() {
         try {
-            const response = await fetch('/llms');
+            const response = await fetch('/api/llm_configs');
             if (response.ok) {
-                const llmNames = await response.json();
+                const llmConfigs = await response.json();
                 llmSelect.innerHTML = ''; // Clear existing options
-                llmNames.forEach(llmName => {
+                llmConfigs.forEach(llmConfig => {
                     const option = document.createElement('option');
-                    option.value = llmName;
-                    option.textContent = llmName;
+                    option.value = llmConfig.name;
+                    option.textContent = llmConfig.name;
                     llmSelect.appendChild(option);
                 });
                 // Optionally set a default or previously selected LLM
-                if (llmNames.length > 0) {
-                    llmSelect.value = llmNames[0]; // Set first as default
+                if (llmConfigs.length > 0) {
+                    llmSelect.value = llmConfigs[0].name; // Set first as default
                 }
             } else {
                 console.error('Failed to fetch LLMs');
@@ -628,21 +634,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch application settings
     async function fetchAppSettings() {
-        try {
-            const response = await fetch('/data/app_settings');
-            if (response.ok) {
-                const data = await response.json();
-                const appName = data.app_name || 'Chat App';
-                if (appTitle) appTitle.textContent = appName;
-                if (sidebarAppName) sidebarAppName.textContent = appName;
-                if (headerAppName) headerAppName.textContent = appName;
-                if (welcomeTitle) welcomeTitle.textContent = `Welcome to ${appName} Chat`;
-            } else {
-                console.error('Failed to fetch app settings');
-            }
-        } catch (error) {
-            console.error('Error fetching app settings:', error);
-        }
+        const appName = window.appConfig.appName || 'Chat App';
+        if (appTitle) appTitle.textContent = appName;
+        if (sidebarAppName) sidebarAppName.textContent = appName;
+        if (headerAppName) headerAppName.textContent = appName;
+        if (welcomeTitle) welcomeTitle.textContent = `Welcome to ${appName} Chat`;
     }
 
     // Handle page visibility changes
