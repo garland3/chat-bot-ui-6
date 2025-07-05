@@ -31,7 +31,7 @@ async def get_data_sources(request: Request):
     
     return data_sources
 
-@router.get("/data/{data_source_name}", response_model=List[Dict[str, Any]])
+@router.get("/{data_source_name}", response_model=List[Dict[str, Any]])
 async def get_data(data_source_name: str, request: Request):
     # Placeholder for data source access control
     # In a real application, you would check user permissions here

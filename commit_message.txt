@@ -1,27 +1,9 @@
-feat: Add UI for selecting data sources
+fix: Resolve UI data source loading issue
 
-This commit introduces a user interface for selecting data sources in the chat application.
-
-- **Frontend Changes:**
-  - Added a new dropdown menu for data sources in `static/index.html`.
-  - Modified `static/app.js` to:
-    - Include `selectedDataSources` in the `AppState`.
-    - Fetch available data sources from the backend (`/api/data/data-sources`).
-    - Dynamically populate the data sources dropdown.
-    - Update the `sendMessage` function to send selected data sources to the backend.
-    - Add event listeners for data source selection.
+This commit addresses the UI issue where data sources were not populating the dropdown.
 
 - **Backend Changes:**
-  - Modified `app/routers/chat.py` to:
-    - Retrieve `selected_data_sources` from the incoming message payload.
-    - Update the session with the selected data sources using `session_manager.update_session_data_sources`.
-    - Inject selected data sources into the system prompt for the LLM.
-  - Modified `app/services/session_manager.py` to:
-    - Add `selected_data_sources` to the session initialization.
-    - Implement `update_session_data_sources` to store selected data sources.
-  - Ensured `app/routers/data.py` is correctly mounted at `/api/data` in `app/main.py`.
+  - Modified `app/routers/data.py` to remove the `/data` prefix from the `APIRouter` decorator.
+  - Modified `app/main.py` to explicitly mount `data.router` with the `/api/data` prefix.
 
-- **Test Updates:**
-  - Corrected test paths in `tests/test_data.py` to reflect the `/api/data` prefix.
-
-This feature allows users to specify which data sources the LLM should consider during a chat session, enhancing the contextual understanding of the AI.
+This ensures consistent and correct routing for data source endpoints, allowing the frontend to fetch them successfully.

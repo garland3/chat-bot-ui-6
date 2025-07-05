@@ -80,7 +80,7 @@ app.add_middleware(CSPMiddleware)
 app.add_middleware(AuthMiddleware)
 app.include_router(chat.router)
 app.include_router(websocket.router)
-app.include_router(data.router, prefix="/api")
+app.include_router(data.router, prefix="/api/data")
 app.include_router(llm_configs.router)
 app.include_router(theme.router)
 

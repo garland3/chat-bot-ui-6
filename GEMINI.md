@@ -15,6 +15,9 @@ If you get stuck for more than 8 iterations, please ask for help. At the point i
 4. not creating new unit tests for new code.
 5. You can access github to check on runners or issues with the github cli tool "gh" .
 
+Before you say you are done all test must pass and no errors on the github actions page.
+
+If you fixed an issue, then on github mark the issue as resolved and add a comment with the details of the fix. 
 
 
 Good luck!
