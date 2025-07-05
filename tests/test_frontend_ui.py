@@ -89,3 +89,14 @@ def test_typing_indicator_is_present(index_html_content):
     typing_indicator = soup.find('span', id='typingIndicator')
     assert typing_indicator is not None, "Typing indicator not found"
     assert "AI is typing..." in typing_indicator.get_text(strip=True), "Typing indicator text is incorrect"
+
+def test_send_button_disabled_when_llm_loading(index_html_content):
+    # This test assumes the initial state of the HTML has "Loading..." for the model
+    # and the send button should be disabled.
+    soup = BeautifulSoup(index_html_content, 'html.parser')
+    model_span = soup.find('span', class_='selected-model', string='Loading...')
+    send_button = soup.find('button', id='sendBtn')
+    
+    assert model_span is not None, "Model loading indicator not found"
+    assert send_button is not None, "Send button not found"
+    assert send_button.has_attr('disabled'), "Send button is not disabled when LLM is loading"
