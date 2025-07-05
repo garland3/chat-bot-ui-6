@@ -1,9 +1,11 @@
-Fix: Prevent API keys exposure in LLM configuration
+feat: Implement initial frontend UI tests
 
-Prevented API keys from being exposed via the `/api/llm_configs` endpoint.
+Implemented basic frontend UI tests using Beautiful Soup to verify the presence and content of key UI elements in `static/index.html`.
 
-Changes made:
-- Introduced `LLMConfigPublic` Pydantic model in `app/services/llm_config_manager.py` to exclude `api_key`.
-- Modified `LLMConfigManager.get_all_llm_configs` to return `LLMConfigPublic` objects.
-- Updated `app/routers/llm_configs.py` to use `LLMConfigPublic` as the response model for `/api/llm_configs`.
-- Added `from typing import List` in `app/routers/llm_configs.py` to resolve `NameError`.
+- Added `tests/test_frontend_ui.py` with tests for:
+  - App title
+  - New chat button
+  - Message input textarea
+- Installed `bs4` (Beautiful Soup) as a dependency for these tests.
+
+This addresses parts of the "Setup Testing Infrastructure" (creating test directory structure) and "UI Components" tasks in GitHub issue #3.
