@@ -1,8 +1,17 @@
-docs: Update frontend testing strategy in js-testing.md
+feat: Add 10 more Beautiful Soup frontend UI tests
 
-Updated `js-testing.md` to reflect the new frontend testing strategy.
+Added 10 additional Beautiful Soup tests to `tests/test_frontend_ui.py` to further verify the presence and content of key UI elements in `static/index.html`.
 
-- **Phase 1:** Basic UI verification using Beautiful Soup (Python) for static HTML structure and text content, integrated with existing Pytest setup.
-- **Phase 2:** Comprehensive end-to-end UI testing using Selenium, executed within a Docker container to ensure isolated, reproducible, and scalable testing.
+These tests cover:
+- Connection status div
+- Tools dropdown button
+- Data Sources dropdown button
+- Model dropdown button
+- Download button
+- User info div
+- Welcome screen div
+- Welcome to Galaxy Chat heading
+- Send button
+- Typing indicator
 
-This update clarifies the approach for frontend testing and addresses the initial setup for issue #3.
+Refined selectors for dropdown buttons to ensure accurate targeting.
