@@ -1,9 +1,35 @@
-
 from fastapi import APIRouter, Request, HTTPException
 from typing import List, Dict, Any
 from app.config import settings
 
-router = APIRouter()
+# prefix /data
+router = APIRouter(tags=["data"])
+
+@router.get("/data-sources", response_model=List[Dict[str, Any]])
+async def get_data_sources(request: Request):
+    """
+    Returns a list of available data sources with their metadata.
+    """
+    # Placeholder for user permission check
+    user_email = request.state.user_email
+    
+    # Define available data sources
+    data_sources = [
+        {
+            "name": "customers"
+        },
+        {
+            "name": "products"
+        }, 
+        {
+            "name": "orders"
+        },
+        {
+            "name": "design data for new products"
+        }
+    ]
+    
+    return data_sources
 
 @router.get("/data/{data_source_name}", response_model=List[Dict[str, Any]])
 async def get_data(data_source_name: str, request: Request):
@@ -23,4 +49,3 @@ async def get_data(data_source_name: str, request: Request):
         ]
     else:
         raise HTTPException(status_code=404, detail="Data source not found")
-

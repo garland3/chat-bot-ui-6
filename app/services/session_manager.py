@@ -18,7 +18,7 @@ class SessionManager:
             return session_id
 
         session_id = str(uuid.uuid4())
-        self.sessions[session_id] = {"user_email": user_email, "messages": [], "selected_tools": []}
+        self.sessions[session_id] = {"user_email": user_email, "messages": [], "selected_tools": [], "selected_data_sources": []}
         self.user_sessions[user_email] = session_id
         log_session_event(session_id, {"event": "session_created", "user_email": user_email})
         return session_id
@@ -27,6 +27,11 @@ class SessionManager:
         if session_id in self.sessions:
             self.sessions[session_id]["selected_tools"] = tools
             log_session_event(session_id, {"event": "tools_updated", "tools": tools})
+
+    def update_session_data_sources(self, session_id: str, data_sources: list):
+        if session_id in self.sessions:
+            self.sessions[session_id]["selected_data_sources"] = data_sources
+            log_session_event(session_id, {"event": "data_sources_updated", "data_sources": data_sources})
 
     def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         return self.sessions.get(session_id)

@@ -84,6 +84,9 @@ async def chat_message(session_id: str, request: Request, message: dict):
 
     user_message = {"role": "user", "content": message.get("content", "")}
     session_messages = session.get("messages", [])
+
+    selected_data_sources = message.get("data_sources", [])
+    session_manager.update_session_data_sources(session_id, selected_data_sources)
     
     # Add system message to session if this is the first user message
     if not session_messages:
@@ -97,6 +100,10 @@ async def chat_message(session_id: str, request: Request, message: dict):
                     system_prompt_content = f.read()
             except FileNotFoundError:
                 system_prompt_content = "You are a helpful AI assistant."
+        
+        if selected_data_sources:
+            system_prompt_content += "\n\nThe user has access to the following data sources: " + ", ".join(selected_data_sources)
+
         system_message = {"role": "system", "content": system_prompt_content}
         session_messages.append(system_message)
     
@@ -123,6 +130,9 @@ async def chat_message(session_id: str, request: Request, message: dict):
     # Get selected tools from the request, or use all tools if none specified
     selected_tool_names = message.get("tools", [])
     session_manager.update_session_tools(session_id, selected_tool_names)
+
+    selected_data_sources = message.get("data_sources", [])
+    session_manager.update_session_data_sources(session_id, selected_data_sources)
     if selected_tool_names:
         # Filter tools to only include selected ones
         all_tools = tool_manager.get_all_tool_definitions()

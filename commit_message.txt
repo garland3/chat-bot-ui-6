@@ -1,12 +1,27 @@
-feat: Implement Phase 13 - WebSocket Connection & Configuration Fixes
+feat: Add UI for selecting data sources
 
-This commit addresses the following items from Phase 13 of the project plan:
+This commit introduces a user interface for selecting data sources in the chat application.
 
-- **Immediate WebSocket Connection**: Modified frontend (static/app.js) to establish WebSocket connection immediately on page load. Updated backend (app/routers/websocket.py) to handle initial connection without a session ID and communicate the session ID via WebSocket. Removed 'Connecting...' indicator from frontend (static/index.html).
-- **UI Configuration Integration**: Verified that app_name and llm_config_file are correctly propagated from backend to frontend.
-- **Docker Configuration Fix**: Confirmed Dockerfile already uses uvicorn with single worker, no changes needed.
+- **Frontend Changes:**
+  - Added a new dropdown menu for data sources in `static/index.html`.
+  - Modified `static/app.js` to:
+    - Include `selectedDataSources` in the `AppState`.
+    - Fetch available data sources from the backend (`/api/data/data-sources`).
+    - Dynamically populate the data sources dropdown.
+    - Update the `sendMessage` function to send selected data sources to the backend.
+    - Add event listeners for data source selection.
 
-Also includes fixes for:
-- Syntax error in CSPMiddleware in app/main.py.
-- Missing WebSocket import in app/services/session_manager.py.
-- Updated tests/test_websocket.py to reflect new WebSocket behavior and fix assertion.
+- **Backend Changes:**
+  - Modified `app/routers/chat.py` to:
+    - Retrieve `selected_data_sources` from the incoming message payload.
+    - Update the session with the selected data sources using `session_manager.update_session_data_sources`.
+    - Inject selected data sources into the system prompt for the LLM.
+  - Modified `app/services/session_manager.py` to:
+    - Add `selected_data_sources` to the session initialization.
+    - Implement `update_session_data_sources` to store selected data sources.
+  - Ensured `app/routers/data.py` is correctly mounted at `/api/data` in `app/main.py`.
+
+- **Test Updates:**
+  - Corrected test paths in `tests/test_data.py` to reflect the `/api/data` prefix.
+
+This feature allows users to specify which data sources the LLM should consider during a chat session, enhancing the contextual understanding of the AI.

@@ -43,9 +43,9 @@ A modern chatbot UI application built with FastAPI backend and responsive fronte
 Built-in tools implementing abstract base class:
 
 1. **BasicMathTool**: Arithmetic operations
-2. **CodeExecutionTool**: Safe code snippet execution (placeholder)
-3. **UserLookupTool**: Corporate directory lookup with sample users
-4. **SQLQueryTool**: Read-only SQLite database queries (payments/customers data)
+2. **CodeExecutionTool**: Python code execution in sandboxed environment
+3. **UserLookupTool**: User information lookup from database
+4. **SQLQueryTool**: Database query execution with safety constraints
 
 **Tool Features**:
 
@@ -107,12 +107,13 @@ Built-in tools implementing abstract base class:
 
 ### Dependencies
 
-- **Python Version**: Python 3.12
+- **Python Version**: Python 3.12 (as used in Dockerfile)
 - **Package Manager**: uv (ultrafast Python package installer and resolver) Always use `uv pip install`
 - **Virtual Environment**: uv-managed virtual environment
 - **Backend**: FastAPI, requests, pydantic, pytest, httpx, pytest-asyncio
 - **Database**: SQLite for sample data
 - **WebSocket**: FastAPI WebSocket support
+- **Markdown**: markdown library for LLM response formatting
 
 ### CI/CD & Containerization
 
@@ -158,11 +159,12 @@ Built-in tools implementing abstract base class:
 ├── pytest.ini                # Pytest configuration
 ├── pyproject.toml             # uv project configuration
 ├── uv.lock                    # uv lock file for reproducible builds
-├── .python-version            # Python version specification (3.11)
+├── .python-version            # Python version specification (3.12) - optional
 ├── .env                       # Environment variables
 ├── .env.example               # Environment variables template
 ├── requirements.txt           # Python dependencies (uv-generated)
 ├── requirements-dev.txt       # Development dependencies
+├── system_prompt.md           # Default system prompt configuration
 └── README.md                  # Project documentation
 ```
 
@@ -174,13 +176,13 @@ Built-in tools implementing abstract base class:
 
 1. **Python Environment Setup**:
    - Install uv (`pip install uv` or platform-specific installer)
-   - Create `.python-version` file specifying Python 3.11
-   - Initialize uv project with `pyproject.toml`
+   - Create `.python-version` file specifying Python 3.12 (optional - using Dockerfile)
+   - Initialize uv project with `pyproject.toml` (optional - using requirements.txt)
    - Set up virtual environment with `uv venv`
 2. FastAPI application setup with basic routers
 3. Pydantic configuration system
 4. **Docker Setup**:
-   - Dockerfile for production container (using Python 3.11)
+   - Dockerfile for production container (using Python 3.12)
    - docker-compose.yml for local development
    - .dockerignore file
 5. **Basic Testing**:
@@ -192,8 +194,11 @@ Built-in tools implementing abstract base class:
    - Automated testing on push/PR
    - Container build and push to GitHub Container Registry (ghcr.io)
    - Multi-stage builds for optimization
+   - before committing make sure the tests pass. Add a time out when running the tests to prevent hanging:
+   `uv run pytest -v tests --timeout=20`
+   - After each phase of of the project, be sure that it is sufficiently tested. Add new tests as needed to cover new features and functionality.
 7. **DevContainer Setup**:
-   - .devcontainer/devcontainer.json (with uv and Python 3.11)
+   - .devcontainer/devcontainer.json (with uv and Python 3.12)
    - Development environment configuration
 
 ### Phase 2: Authentication & Session Management
@@ -238,18 +243,23 @@ Built-in tools implementing abstract base class:
 ## Environment Variables
 
 ```env
-# LLM Configuration
+# Application Configuration
+APP_NAME=Galaxy Chat
+SYSTEM_PROMPT_OVERRIDE=  # Optional override for system_prompt.md
+
+# LLM Configuration (Legacy - for backward compatibility)
 LLM_BASE_URL=https://api.openai.com/v1
 LLM_API_KEY=your-api-key
 LLM_MODEL_NAME=gpt-3.5-turbo
 
-# Application Configuration
-TEST_MODE=false
-TEST_EMAIL=test@test.com
+# Multi-LLM Configuration
+LLM_CONFIG_FILE=config/llms.yml  # Path to YAML configuration file
 
 # Testing Configuration
 DISABLE_WEBSOCKET=false
 DISABLE_LLM_CALLS=false
+TEST_MODE=false
+TEST_EMAIL=test@test.com
 ```
 
 ## Future Enhancements
@@ -262,9 +272,6 @@ DISABLE_LLM_CALLS=false
 - Multi-model support
 - Plugin system for tools
 
------------------------------------------------------------------------------
-
-## NEW PHASES - Enhanced Features & Improvements
 
 ### Phase 7: Session Persistence & Conversation History
 
@@ -385,38 +392,24 @@ DISABLE_LLM_CALLS=false
    - Set up persistent volume claims for logs and data
    - Add horizontal pod autoscaling configuration
 
-### Updated Environment Variables
-
-```env
-# Application Configuration
-APP_NAME=Galaxy Chat
-SYSTEM_PROMPT_OVERRIDE=  # Optional override for system_prompt.md
-
-# LLM Configuration (Legacy - for backward compatibility)
-LLM_BASE_URL=https://api.openai.com/v1
-LLM_API_KEY=your-api-key
-LLM_MODEL_NAME=gpt-3.5-turbo
-
-# Multi-LLM Configuration
-LLM_CONFIG_FILE=config/llms.yml  # Path to YAML configuration file
-
-# Testing Configuration
-DISABLE_WEBSOCKET=false
-DISABLE_LLM_CALLS=false
-TEST_MODE=false
-TEST_EMAIL=test@test.com
-```
-
-### New Configuration Files
+## Configuration Files
 
 **system_prompt.md**:
+
 ```markdown
 You are a helpful AI assistant. You provide accurate, helpful, and concise responses to user questions. You can use tools when available to enhance your responses with real-time data and functionality.
 ```
 
 **config/llms.yml**:
+
 ```yaml
 llms:
+  - name: "Anthropic Claude"
+    provider: "anthropic"
+    base_url: "https://api.anthropic.com/v1"
+    api_key: "${LLM_API_KEY}"
+    model_name: "claude-3-5-sonnet-20241022"
+    
   - name: "OpenAI GPT-3.5"
     provider: "openai"
     base_url: "https://api.openai.com/v1"
@@ -449,9 +442,9 @@ llms:
    - Ensure configuration values reach the user interface properly
 
 3. **Docker Configuration Fix**:
-   - Update Dockerfile CMD to use `uvicorn` instead of `gunicorn`
-   - Set single worker configuration or remove worker specification
-   - Ensure proper ASGI server for WebSocket support
+   - Update Dockerfile CMD to use `uvicorn` instead of `gunicorn` ✅ (Already implemented)
+   - Set single worker configuration or remove worker specification ✅ (Already implemented)
+   - Ensure proper ASGI server for WebSocket support ✅ (Already implemented)
 
 ### Implementation Priority
 
@@ -465,3 +458,8 @@ These new phases should be implemented after the original Phase 6 completion. Ea
   - Chat tests: `uv run pytest -v tests/test_chat.py --timeout=20`
   - Full test suite: `uv run pytest -v --timeout=60`
   - This prevents tests from hanging indefinitely due to network issues or infinite loops
+
+
+NOTe:
+when commiting there is some persistent issue that doesn't allow using the cli. Instead write the commit message in the file `commit_message.txt` and then git commit command. 
+

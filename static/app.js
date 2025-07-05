@@ -7,6 +7,8 @@ class AppState {
         this.isTyping = false;
         this.currentStreamingMessage = null;
         this.selectedTools = new Set();
+        this.selectedDataSources = new Set();
+        this.availableDataSources = [];
         this.selectedLLM = null;
         this.availableLLMs = [];
         this.userEmail = null;
@@ -29,6 +31,10 @@ const elements = {
     toolsBtn: document.getElementById('toolsBtn'),
     toolsMenu: document.getElementById('toolsMenu'),
     toolsCount: document.getElementById('toolsCount'),
+    dataSourcesDropdown: document.getElementById('dataSourcesDropdown'),
+    dataSourcesBtn: document.getElementById('dataSourcesBtn'),
+    dataSourcesMenu: document.getElementById('dataSourcesMenu'),
+    dataSourcesCount: document.getElementById('dataSourcesCount'),
     llmDropdown: document.getElementById('llmDropdown'),
     llmBtn: document.getElementById('llmBtn'),
     llmMenu: document.getElementById('llmMenu'),
@@ -138,6 +144,7 @@ function updateDebugInfo() {
         sessionId: appState.sessionId,
         wsReadyState: appState.ws?.readyState,
         selectedTools: Array.from(appState.selectedTools),
+        selectedDataSources: Array.from(appState.selectedDataSources),
         selectedLLM: appState.selectedLLM,
         messageCount: appState.messageHistory.length
     });
@@ -433,6 +440,7 @@ async function sendMessage(content) {
             body: JSON.stringify({
                 message: content,
                 tools: Array.from(appState.selectedTools),
+                data_sources: Array.from(appState.selectedDataSources),
                 llm_config: appState.selectedLLM
             })
         });
@@ -562,7 +570,7 @@ function autoResizeTextarea() {
     textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
 }
 
-// Tool Management
+"""// Tool Management
 function updateToolsDisplay() {
     elements.toolsCount.textContent = appState.selectedTools.size;
     
@@ -582,6 +590,111 @@ function toggleTool(toolName) {
     updateToolsDisplay();
     updateDebugInfo();
 }
+
+// Data Source Management
+async function loadDataSources() {
+    try {
+        const response = await fetch('/api/data/data-sources');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const dataSources = await response.json();
+        appState.availableDataSources = dataSources;
+        updateDataSourcesDisplay();
+    } catch (error) {
+        console.error('Error loading data sources:', error);
+        showToast('Failed to load data sources', 'error');
+    }
+}
+
+function updateDataSourcesDisplay() {
+    elements.dataSourcesCount.textContent = appState.selectedDataSources.size;
+    
+    elements.dataSourcesMenu.innerHTML = '<div class="dropdown-header">Select Data Sources</div>';
+    
+    appState.availableDataSources.forEach(source => {
+        const label = document.createElement('label');
+        label.className = 'checkbox-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = 'data-sources';
+        checkbox.value = source.name;
+        checkbox.checked = appState.selectedDataSources.has(source.name);
+        
+        const span = document.createElement('span');
+        span.className = 'checkmark';
+        
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        label.appendChild(document.createTextNode(source.name));
+        
+        elements.dataSourcesMenu.appendChild(label);
+    });
+}
+
+function toggleDataSource(sourceName) {
+    if (appState.selectedDataSources.has(sourceName)) {
+        appState.selectedDataSources.delete(sourceName);
+    } else {
+        appState.selectedDataSources.add(sourceName);
+    }
+    updateDataSourcesDisplay();
+    updateDebugInfo();
+}
+
+// Data Source Management
+async function loadDataSources() {
+    try {
+        const response = await fetch('/api/data/data-sources');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const dataSources = await response.json();
+        appState.availableDataSources = dataSources;
+        updateDataSourcesDisplay();
+    } catch (error) {
+        console.error('Error loading data sources:', error);
+        showToast('Failed to load data sources', 'error');
+    }
+}
+
+function updateDataSourcesDisplay() {
+    elements.dataSourcesCount.textContent = appState.selectedDataSources.size;
+    
+    elements.dataSourcesMenu.innerHTML = '<div class="dropdown-header">Select Data Sources</div>';
+    
+    appState.availableDataSources.forEach(source => {
+        const label = document.createElement('label');
+        label.className = 'checkbox-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = 'data-sources';
+        checkbox.value = source.name;
+        checkbox.checked = appState.selectedDataSources.has(source.name);
+        
+        const span = document.createElement('span');
+        span.className = 'checkmark';
+        
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        label.appendChild(document.createTextNode(source.name));
+        
+        elements.dataSourcesMenu.appendChild(label);
+    });
+}
+
+function toggleDataSource(sourceName) {
+    if (appState.selectedDataSources.has(sourceName)) {
+        appState.selectedDataSources.delete(sourceName);
+    } else {
+        appState.selectedDataSources.add(sourceName);
+    }
+    updateDataSourcesDisplay();
+    updateDebugInfo();
+}
+""
 
 // LLM Management
 async function loadLLMConfigs() {
@@ -740,11 +853,23 @@ function setupEventListeners() {
         e.stopPropagation();
         toggleDropdown(elements.llmDropdown);
     });
+
+    elements.dataSourcesBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDropdown(elements.dataSourcesDropdown);
+    });
     
     // Tool selection
     elements.toolsMenu.addEventListener('click', (e) => {
         if (e.target.type === 'checkbox') {
             toggleTool(e.target.value);
+        }
+        e.stopPropagation();
+    });
+
+    elements.dataSourcesMenu.addEventListener('click', (e) => {
+        if (e.target.type === 'checkbox') {
+            toggleDataSource(e.target.value);
         }
         e.stopPropagation();
     });
@@ -892,6 +1017,7 @@ async function initialize() {
         await Promise.all([
             loadThemeConfig(),
             loadLLMConfigs(),
+            loadDataSources(),
             loadUserInfo()
         ]);
         
