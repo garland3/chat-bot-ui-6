@@ -10,6 +10,12 @@ class LLMConfig(BaseModel):
     api_key: str
     model_name: str
 
+class LLMConfigPublic(BaseModel):
+    name: str
+    provider: str
+    base_url: str
+    model_name: str
+
 class LLMConfigManager:
     def __init__(self, config_file: str):
         self.config_file = config_file
@@ -44,5 +50,5 @@ class LLMConfigManager:
     def get_all_llm_names(self) -> List[str]:
         return list(self.llm_configs.keys())
 
-    def get_all_llm_configs(self) -> List[LLMConfig]:
-        return list(self.llm_configs.values())
+    def get_all_llm_configs(self) -> List[LLMConfigPublic]:
+        return [LLMConfigPublic(**config.model_dump(exclude={'api_key'})) for config in self.llm_configs.values()]

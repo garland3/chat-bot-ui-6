@@ -490,3 +490,11 @@ These new phases should be implemented after the original Phase 6 completion. Ea
 NOTe:
 when commiting there is some persistent issue that doesn't allow using the cli. Instead write the commit message in the file `commit_message.txt` and then git commit command.
 
+NOTE: phase 14 is on going and incremental. 
+
+
+Status:
+1-13 are done.
+14 is ongoing and incremental.
+
+
