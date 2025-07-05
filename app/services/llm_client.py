@@ -7,7 +7,7 @@ from app.services.llm_config_manager import LLMConfigManager
 class LLMClient:
     def __init__(self):
         self.llm_config_manager = LLMConfigManager(settings.llm_config_file)
-        self.current_llm_name = "Anthropic Claude" # Default LLM
+        self.current_llm_name = "Claude 3.5 Sonnet" # Default LLM
         self._set_current_llm_config()
 
     def _set_current_llm_config(self):

@@ -1,9 +1,29 @@
-fix: Resolve UI data source loading issue
+fix: Resolve Alpine.js connection status not updating from WebSocket
 
-This commit addresses the UI issue where data sources were not populating the dropdown.
+**Main Issue Fixed:**
+- Connection status stuck on "Connecting..." despite WebSocket being connected
+- Alpine.js component wasn't receiving state updates from global app state
 
-- **Backend Changes:**
-  - Modified `app/routers/data.py` to remove the `/data` prefix from the `APIRouter` decorator.
-  - Modified `app/main.py` to explicitly mount `data.router` with the `/api/data` prefix.
+**Connection Status Component Fixes:**
+- Added polling mechanism to wait for window.app availability during initialization
+- Enhanced state listener setup with proper cleanup and immediate state sync
+- Added comprehensive debug logging to trace state flow
+- Fixed timing issue where Alpine initialized before global app state was ready
 
-This ensures consistent and correct routing for data source endpoints, allowing the frontend to fetch them successfully.
+**WebSocket Service Updates:**
+- Removed DOM manipulation conflicts with Alpine.js components
+- Fixed extra closing brace syntax error in updateConnectionStatus method
+- Added fallback for legacy DOM elements while supporting Alpine reactivity
+
+**State Management Debugging:**
+- Added console logging to AppState.setConnected() and notifyStateChange()
+- Added detailed logging to Alpine component state updates
+- Enhanced visibility into listener registration and callback execution
+
+**API Endpoint Fix:**
+- Corrected data sources endpoint from '/api/data_sources' to '/api/data/data-sources'
+
+**Expected Result:**
+- Connection status should now update from "Connecting..." to "Connected" when WebSocket connects
+- Alpine.js reactive UI working properly with global state synchronization
+- Data sources dropdown should load successfully

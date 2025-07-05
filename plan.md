@@ -446,6 +446,33 @@ llms:
    - Set single worker configuration or remove worker specification ✅ (Already implemented)
    - Ensure proper ASGI server for WebSocket support ✅ (Already implemented)
 
+### Phase 14: Progressive Alpine.js Integration
+
+1. **Modular Architecture Foundation** ✅:
+   - ES6 modules implemented with clean separation of concerns
+   - State management, services, and components properly separated
+   - Backward compatibility maintained with original app.js
+
+2. **Alpine.js Progressive Enhancement**:
+   - Add Alpine.js CDN to index.html for lightweight reactivity
+   - Convert connection status component to Alpine.js reactive component
+   - Implement Alpine.js for dropdown state management
+   - Transform toast notifications to use Alpine.js reactivity
+   - Gradually migrate form interactions and UI state to Alpine.js
+
+3. **Benefits of Alpine.js Integration**:
+   - Declarative reactive UI updates without virtual DOM overhead
+   - Minimal learning curve with HTML-attribute syntax
+   - Perfect complement to existing modular ES6 architecture
+   - No build step required - works directly in browser
+   - Incremental adoption without breaking existing functionality
+
+4. **Migration Strategy**:
+   - Start with simple UI state (connection status, typing indicators)
+   - Move to interactive components (dropdowns, form validation)
+   - Enhance with reactive data binding for selected tools/models
+   - Maintain existing WebSocket and API service architecture
+
 ### Implementation Priority
 
 These new phases should be implemented after the original Phase 6 completion. Each phase builds upon the previous infrastructure while adding significant user experience improvements and advanced functionality.
@@ -461,5 +488,5 @@ These new phases should be implemented after the original Phase 6 completion. Ea
 
 
 NOTe:
-when commiting there is some persistent issue that doesn't allow using the cli. Instead write the commit message in the file `commit_message.txt` and then git commit command. 
+when commiting there is some persistent issue that doesn't allow using the cli. Instead write the commit message in the file `commit_message.txt` and then git commit command.
 

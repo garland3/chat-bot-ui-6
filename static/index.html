@@ -6,6 +6,8 @@
     <title>Galaxy Chat</title>
     <link rel="stylesheet" href="/static/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <!-- Alpine.js for reactive UI components -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -13,9 +15,12 @@
         <header class="header">
             <div class="header-left">
                 <h1 class="app-title">Galaxy Chat</h1>
-                <div class="connection-status" id="connectionStatus">
-                    <span class="status-indicator" id="statusIndicator"></span>
-                    <span class="status-text" id="statusText">Connecting...</span>
+                <div class="connection-status" 
+                     x-data="connectionStatus" 
+                     x-init="init()">
+                    <span class="status-indicator" 
+                          :class="isConnected ? 'connected' : 'disconnected'"></span>
+                    <span class="status-text" x-text="statusText"></span>
                 </div>
             </div>
             
@@ -27,65 +32,109 @@
                     New Chat
                 </button>
                 
-                <div class="dropdown" id="toolsDropdown">
-                    <button class="btn btn-secondary dropdown-toggle" id="toolsBtn">
+                <div class="dropdown" 
+                     x-data="toolsDropdown" 
+                     x-init="init()"
+                     :class="{ active: isOpen }"
+                     @click.away="close()">
+                    <button class="btn btn-secondary dropdown-toggle" 
+                            @click="toggle()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                         </svg>
                         Tools
-                        <span class="selected-count" id="toolsCount">0</span>
+                        <span class="selected-count" x-text="selectedCount"></span>
                     </button>
-                    <div class="dropdown-menu" id="toolsMenu">
+                    <div class="dropdown-menu" x-show="isOpen" x-transition>
                         <div class="dropdown-header">Select Tools</div>
                         <label class="checkbox-item">
-                            <input type="checkbox" name="tools" value="basic_math" id="tool-basic-math">
+                            <input type="checkbox" 
+                                   name="tools" 
+                                   value="basic_math"
+                                   :checked="isToolSelected('basic_math')"
+                                   @change="toggleTool('basic_math')">
                             <span class="checkmark"></span>
                             Basic Math
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" name="tools" value="code_execution" id="tool-code-execution">
+                            <input type="checkbox" 
+                                   name="tools" 
+                                   value="code_execution"
+                                   :checked="isToolSelected('code_execution')"
+                                   @change="toggleTool('code_execution')">
                             <span class="checkmark"></span>
                             Code Execution
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" name="tools" value="user_lookup" id="tool-user-lookup">
+                            <input type="checkbox" 
+                                   name="tools" 
+                                   value="user_lookup"
+                                   :checked="isToolSelected('user_lookup')"
+                                   @change="toggleTool('user_lookup')">
                             <span class="checkmark"></span>
                             User Lookup
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" name="tools" value="sql_query" id="tool-sql-query">
+                            <input type="checkbox" 
+                                   name="tools" 
+                                   value="sql_query"
+                                   :checked="isToolSelected('sql_query')"
+                                   @change="toggleTool('sql_query')">
                             <span class="checkmark"></span>
                             SQL Query
                         </label>
                     </div>
                 </div>
                 
-                <div class="dropdown" id="dataSourcesDropdown">
-                    <button class="btn btn-secondary dropdown-toggle" id="dataSourcesBtn">
+                <div class="dropdown" 
+                     x-data="dataSourcesDropdown" 
+                     x-init="init()" 
+                     :class="{ active: isOpen }"
+                     @click.outside="close()">
+                    <button class="btn btn-secondary dropdown-toggle" @click="toggle()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 12v-2m0 4v2m-4-2h2m4 0h2M4 12a8 8 0 1 1 16 0a8 8 0 0 1-16 0z"/>
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                         </svg>
                         Data Sources
-                        <span class="selected-count" id="dataSourcesCount">0</span>
+                        <span class="selected-count" x-text="selectedCount">0</span>
                     </button>
-                    <div class="dropdown-menu" id="dataSourcesMenu">
+                    <div class="dropdown-menu" x-show="isOpen" x-transition>
                         <div class="dropdown-header">Select Data Sources</div>
-                        <!-- Data sources will be populated dynamically -->
+                        <template x-for="source in dataSources" :key="source.name">
+                            <div class="checkbox-item" 
+                                 :class="{ selected: isSourceSelected(source.name) }"
+                                 @click="toggleSource(source.name)">
+                                <input type="checkbox" 
+                                       :id="'source-' + source.name" 
+                                       :checked="isSourceSelected(source.name)">
+                                <label :for="'source-' + source.name" x-text="source.name"></label>
+                            </div>
+                        </template>
                     </div>
                 </div>
                 
-                <div class="dropdown" id="llmDropdown">
-                    <button class="btn btn-secondary dropdown-toggle" id="llmBtn">
+                <div class="dropdown" 
+                     x-data="llmDropdown" 
+                     x-init="init()" 
+                     :class="{ active: isOpen }"
+                     @click.outside="close()">
+                    <button class="btn btn-secondary dropdown-toggle" @click="toggle()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="3"/>
                             <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
                         </svg>
                         Model
-                        <span class="selected-model" id="selectedModel">Loading...</span>
+                        <span class="selected-model" x-text="selectedModelName">Loading...</span>
                     </button>
-                    <div class="dropdown-menu" id="llmMenu">
+                    <div class="dropdown-menu" x-show="isOpen" x-transition>
                         <div class="dropdown-header">Select AI Model</div>
-                        <!-- Models will be populated dynamically -->
+                        <template x-for="llm in availableLLMs" :key="llm.name">
+                            <div class="radio-item" 
+                                 :class="{ selected: isLLMSelected(llm.name) }"
+                                 @click="selectLLM(llm)"
+                                 x-text="llm.name">
+                            </div>
+                        </template>
                     </div>
                 </div>
                 
@@ -174,9 +223,21 @@
             </div>
         </div>
 
-        <!-- Toast Container -->
-        <div class="toast-container" id="toastContainer">
-            <!-- Toast notifications will be added here -->
+        <!-- Toast Container with Alpine.js -->
+        <div class="toast-container" 
+             x-data="toastManager" 
+             x-init="init()">
+            <template x-for="toast in toasts" :key="toast.id">
+                <div :class="`toast ${toast.type} ${toast.show ? 'show' : ''}`">
+                    <div class="toast-header">
+                        <span class="toast-title" 
+                              x-text="toast.type.charAt(0).toUpperCase() + toast.type.slice(1)"></span>
+                        <button class="toast-close" 
+                                @click="remove(toast.id)">&times;</button>
+                    </div>
+                    <div class="toast-body" x-text="toast.message"></div>
+                </div>
+            </template>
         </div>
 
     </div>
@@ -192,6 +253,13 @@
         };
     </script>
     
-    <script src="/static/app.js"></script>
+    <!-- Alpine.js Components (must load before Alpine.js) -->
+    <script src="/static/js/components/AlpineComponents.js"></script>
+    
+    <!-- Use modular version with ES6 modules -->
+    <script type="module" src="/static/app-modular.js"></script>
+    
+    <!-- Fallback to original for browsers without module support -->
+    <script nomodule src="/static/app.js"></script>
 </body>
 </html>
