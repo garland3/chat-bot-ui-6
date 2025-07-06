@@ -102,32 +102,50 @@ async def run_pytest(timeout: int = 20) -> Dict[str, Any]:
 
 async def test_runner_loop():
     """Main test runner loop"""
+    print("🏃‍♂️ TEST RUNNER LOOP STARTED")
+    print(f"📊 Initial state: {current_test_state}")
+    
     while current_test_state["running"]:
+        print(f"🔄 Starting new test cycle. Running: {current_test_state['running']}")
+        
         # Run tests
+        print("📡 Broadcasting test_start...")
         await manager.broadcast({
             "type": "test_start",
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
+        print("✅ Broadcasted test_start")
         
+        print("🧪 Running pytest...")
         results = await run_pytest(current_test_state["timeout"])
+        print(f"✅ Test completed with return code: {results['returncode']}")
+        
         current_test_state["last_run"] = results["timestamp"]
         current_test_state["last_results"] = results
         
+        print("📡 Broadcasting test_complete...")
         await manager.broadcast({
             "type": "test_complete",
             "results": results
         })
+        print("✅ Broadcasted test_complete")
         
         # Wait with progress updates
         wait_time = current_test_state["wait_time"]
+        print(f"⏳ Starting {wait_time}s wait period...")
+        
         for i in range(wait_time):
             if not current_test_state["running"]:
+                print("🛑 Breaking wait loop - running is False")
                 break
                 
             progress = ((i + 1) * 100) // wait_time
             remaining = wait_time - i - 1
             current_test_state["progress"] = progress
             current_test_state["next_run_in"] = remaining
+            
+            if i % 5 == 0:  # Log every 5 seconds to reduce spam
+                print(f"📊 Progress: {progress}% ({remaining}s remaining)")
             
             await manager.broadcast({
                 "type": "progress",
@@ -136,6 +154,9 @@ async def test_runner_loop():
             })
             
             await asyncio.sleep(1)
+    
+    print("🏁 TEST RUNNER LOOP ENDED")
+    print(f"📊 Final state: {current_test_state}")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -328,11 +349,6 @@ async def get_dashboard():
         const ws = new WebSocket(`ws://${window.location.host}/ws`);
         let isRunning = false;
         
-        ws.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            handleWebSocketMessage(data);
-        };
-        
         function handleWebSocketMessage(data) {
             const statusCard = document.getElementById('statusCard');
             const statusTitle = document.getElementById('statusTitle');
@@ -403,39 +419,78 @@ async def get_dashboard():
         }
         
         async function startTests() {
-            console.log('🚀 startTests() called');
-            const waitTime = document.getElementById('waitTime').value;
-            const timeout = document.getElementById('timeout').value;
-            console.log(`Parameters: waitTime=${waitTime}, timeout=${timeout}`);
+            console.log('🚀 startTests() function called');
+            console.log('🔍 Function execution start');
+            
+            // Check if elements exist
+            const waitTimeElement = document.getElementById('waitTime');
+            const timeoutElement = document.getElementById('timeout');
+            console.log('📋 Elements found:', {
+                waitTimeElement: !!waitTimeElement,
+                timeoutElement: !!timeoutElement,
+                waitTimeValue: waitTimeElement?.value,
+                timeoutValue: timeoutElement?.value
+            });
+            
+            const waitTime = waitTimeElement.value;
+            const timeout = timeoutElement.value;
+            console.log(`📝 Parameters: waitTime=${waitTime}, timeout=${timeout}`);
             
             try {
-                console.log('Sending POST request to /start...');
+                console.log('🌐 About to send POST request to /start...');
+                console.log('📤 Request details:', {
+                    method: 'POST',
+                    url: '/start',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `wait_time=${waitTime}&timeout=${timeout}`
+                });
+                
                 const response = await fetch('/start', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     body: `wait_time=${waitTime}&timeout=${timeout}`
                 });
                 
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
+                console.log('📨 Response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    headers: [...response.headers.entries()]
+                });
                 
                 const result = await response.json();
-                console.log('Server response:', result);
+                console.log('📊 Parsed response data:', result);
                 
                 if (response.ok) {
+                    console.log('✅ Response OK - updating UI...');
                     isRunning = true;
-                    document.getElementById('statusCard').className = 'status-card status-running';
-                    document.getElementById('statusTitle').innerHTML = '🚀 Starting Continuous Testing...';
-                    document.getElementById('statusText').innerHTML = 'Initializing test runner';
-                    console.log('✅ Tests started successfully');
+                    
+                    const statusCard = document.getElementById('statusCard');
+                    const statusTitle = document.getElementById('statusTitle');
+                    const statusText = document.getElementById('statusText');
+                    
+                    console.log('🎨 UI elements:', {
+                        statusCard: !!statusCard,
+                        statusTitle: !!statusTitle,
+                        statusText: !!statusText
+                    });
+                    
+                    statusCard.className = 'status-card status-running';
+                    statusTitle.innerHTML = '🚀 Starting Continuous Testing...';
+                    statusText.innerHTML = 'Initializing test runner';
+                    
+                    console.log('✅ UI updated successfully');
                 } else {
-                    console.error('❌ Failed to start tests:', result);
+                    console.error('❌ Response not OK:', response.status, result);
                     alert('Failed to start tests: ' + JSON.stringify(result));
                 }
             } catch (error) {
-                console.error('❌ Error starting tests:', error);
+                console.error('❌ Fetch error:', error);
+                console.error('❌ Error stack:', error.stack);
                 alert('Error starting tests: ' + error.message);
             }
+            
+            console.log('🏁 startTests() function completed');
         }
         
         async function stopTests() {
@@ -456,18 +511,56 @@ async def get_dashboard():
         }
         
         // Initialize connection
+        console.log('🔌 Initializing WebSocket connection...');
         ws.onopen = function() {
-            console.log('✅ Connected to test runner WebSocket');
+            console.log('✅ WebSocket connected successfully');
         };
         
         ws.onerror = function(error) {
             console.error('❌ WebSocket error:', error);
         };
         
-        ws.onclose = function() {
-            console.log('🔌 Disconnected from test runner');
+        ws.onclose = function(event) {
+            console.log('🔌 WebSocket disconnected:', {
+                code: event.code,
+                reason: event.reason,
+                wasClean: event.wasClean
+            });
+            console.log('🔄 Reloading page in 2 seconds...');
             setTimeout(() => window.location.reload(), 2000);
         };
+        
+        ws.onmessage = function(event) {
+            console.log('📨 WebSocket message received:', event.data);
+            try {
+                const data = JSON.parse(event.data);
+                console.log('📊 Parsed WebSocket data:', data);
+                handleWebSocketMessage(data);
+            } catch (error) {
+                console.error('❌ Error parsing WebSocket message:', error);
+            }
+        };
+        
+        // Add click event listeners with debugging
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 DOM content loaded');
+            
+            const startButton = document.querySelector('button[onclick="startTests()"]');
+            const stopButton = document.querySelector('button[onclick="stopTests()"]');
+            const runOnceButton = document.querySelector('button[onclick="runOnce()"]');
+            
+            console.log('🔘 Button elements found:', {
+                startButton: !!startButton,
+                stopButton: !!stopButton,
+                runOnceButton: !!runOnceButton
+            });
+            
+            if (startButton) {
+                startButton.addEventListener('click', function(e) {
+                    console.log('🔘 Start button clicked (addEventListener)');
+                });
+            }
+        });
     </script>
 </body>
 </html>
@@ -475,78 +568,118 @@ async def get_dashboard():
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    print("🔌 New WebSocket connection attempt")
     await manager.connect(websocket)
+    print(f"✅ WebSocket connected. Total connections: {len(manager.active_connections)}")
+    
     # Send current status
-    await websocket.send_text(json.dumps({
+    initial_status = {
         "type": "status",
         "running": current_test_state["running"],
         "wait_time": current_test_state["wait_time"],
         "timeout": current_test_state["timeout"]
-    }))
+    }
+    print(f"📤 Sending initial status: {initial_status}")
+    await websocket.send_text(json.dumps(initial_status))
     
     try:
         while True:
             # Keep connection alive
             await asyncio.sleep(1)
     except WebSocketDisconnect:
+        print("🔌 WebSocket disconnected")
         manager.disconnect(websocket)
+        print(f"📊 Remaining connections: {len(manager.active_connections)}")
 
 @app.post("/start")
 async def start_tests(wait_time: int = Form(30), timeout: int = Form(20)):
     """Start continuous testing"""
-    print(f"🚀 Start request received: wait_time={wait_time}, timeout={timeout}")
-    print(f"Current state before: {current_test_state}")
+    print("=" * 50)
+    print("🚀 START ENDPOINT CALLED")
+    print(f"📝 Request parameters: wait_time={wait_time}, timeout={timeout}")
+    print(f"📊 Current state before: {current_test_state}")
+    print(f"🔗 Active WebSocket connections: {len(manager.active_connections)}")
     
     if current_test_state["running"]:
-        print("⚠️  Tests already running")
+        print("⚠️  Tests already running - returning early")
         return {"status": "already_running"}
     
     try:
+        print("🔄 Setting state to running...")
         current_test_state["running"] = True
         current_test_state["wait_time"] = wait_time
         current_test_state["timeout"] = timeout
+        print(f"✅ State updated: {current_test_state}")
         
         # Start the test runner loop
+        print("🚀 Creating test runner task...")
         task = asyncio.create_task(test_runner_loop())
         print(f"✅ Test runner loop started, task: {task}")
+        print(f"📋 Task state: {task.done()}, {task.cancelled()}")
         
-        await manager.broadcast({
+        print("📡 Broadcasting status update...")
+        broadcast_message = {
             "type": "status",
             "running": True,
             "wait_time": wait_time,
             "timeout": timeout
-        })
-        print("📡 Broadcasted status update")
+        }
+        print(f"📤 Broadcasting: {broadcast_message}")
+        await manager.broadcast(broadcast_message)
+        print("✅ Broadcasted status update successfully")
         
-        return {"status": "started", "wait_time": wait_time, "timeout": timeout}
+        response = {"status": "started", "wait_time": wait_time, "timeout": timeout}
+        print(f"📤 Returning response: {response}")
+        print("=" * 50)
+        return response
     except Exception as e:
-        print(f"❌ Error starting tests: {e}")
+        print(f"❌ ERROR in start_tests: {e}")
         import traceback
         traceback.print_exc()
         current_test_state["running"] = False
-        return {"status": "error", "message": str(e)}
+        error_response = {"status": "error", "message": str(e)}
+        print(f"📤 Returning error response: {error_response}")
+        print("=" * 50)
+        return error_response
 
 @app.post("/stop")
 async def stop_tests():
     """Stop continuous testing"""
+    print("=" * 50)
+    print("⏹️ STOP ENDPOINT CALLED")
+    print(f"📊 Current state before: {current_test_state}")
+    
     current_test_state["running"] = False
+    print("✅ Set running state to False")
     
     await manager.broadcast({
         "type": "status",
         "running": False
     })
+    print("📡 Broadcasted stop status")
     
-    return {"status": "stopped"}
+    response = {"status": "stopped"}
+    print(f"📤 Returning response: {response}")
+    print("=" * 50)
+    return response
+
 
 @app.post("/run-once")
 async def run_once(timeout: int = Form(20)):
     """Run tests once without continuous loop"""
+    print("=" * 50)
+    print("🔄 RUN-ONCE ENDPOINT CALLED")
+    print(f"📝 Request parameters: timeout={timeout}")
+    
     await manager.broadcast({
         "type": "test_start",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
+    print("📡 Broadcasted test_start")
     
     results = await run_pytest(timeout)
+    print(f"✅ Test results: {results}")
+    
     current_test_state["last_run"] = results["timestamp"]
     current_test_state["last_results"] = results
     
@@ -554,24 +687,34 @@ async def run_once(timeout: int = Form(20)):
         "type": "test_complete",
         "results": results
     })
+    print("📡 Broadcasted test_complete")
     
-    return {"status": "completed", "results": results}
+    response = {"status": "completed", "results": results}
+    print(f"📤 Returning response: {response}")
+    print("=" * 50)
+    return response
 
 @app.get("/status")
 async def get_status():
     """Get current status"""
     return current_test_state
 
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Return empty favicon to prevent 404 errors"""
+    return HTMLResponse(content="", media_type="image/x-icon")
+
 if __name__ == "__main__":
     print("🧪 Starting PyTest Runner Web Interface...")
-    print("📊 Dashboard will be available at: http://localhost:8001")
+    print("📊 Dashboard will be available at: http://localhost:8002")
     print("⚙️  Default settings: 30s wait time, 20s timeout")
     print("🔄 Use Ctrl+C to stop the server")
     
     uvicorn.run(
         app, 
         host="0.0.0.0", 
-        port=8001, 
+        port=8002, 
         log_level="info",
         access_log=False
     )

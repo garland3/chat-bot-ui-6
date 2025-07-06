@@ -1,4 +1,6 @@
 npm install -g @google/gemini-cli
-gemini
+<!-- gemini -->
 
 npm install -g @anthropic-ai/claude-code
+
+claude

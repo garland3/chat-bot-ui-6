@@ -15,13 +15,19 @@ async def websocket_endpoint(websocket: WebSocket):
             data = json.loads(message)
 
             if data.get('type') == 'session_init':
-                session_id = data.get('session_id')
-                if session_id:
+                requested_session_id = data.get('session_id')
+                if requested_session_id:
+                    session_id = requested_session_id
                     session_manager.register_websocket(session_id, websocket)
-                    await websocket.send_json({"type": "session_id", "session_id": session_id})
-                    print(f"WebSocket registered for session: {session_id}")
+                    print(f"WebSocket re-registered for session: {session_id}")
                 else:
-                    print("Received session_init without session_id")
+                    # Create a new session if no session_id is provided
+                    user_email = "websocket_user" # Default user for websocket initiated sessions
+                    session_id = session_manager.create_session(user_email)
+                    session_manager.register_websocket(session_id, websocket)
+                    print(f"New session created and WebSocket registered: {session_id}")
+                
+                await websocket.send_json({"type": "session_id", "session_id": session_id})
             else:
                 # Handle other messages as before, or pass to session manager
                 if session_id:

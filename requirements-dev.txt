@@ -4,3 +4,5 @@ httpx
 pytest-asyncio
 pytest-mock
 beautifulsoup4
+playwright
+pytest-playwright

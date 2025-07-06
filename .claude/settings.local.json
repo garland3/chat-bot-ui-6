@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(grep:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(uv pip install:*)",
+      "Bash(playwright install:*)",
+      "Bash(python -m pytest tests/test_alpine_components_missing.py::test_page_fails_if_alpine_components_are_missing -v)",
+      "Bash(python -m pytest tests/test_alpine_components_missing.py::test_page_fails_if_alpine_components_are_missing -v -s)",
+      "Bash(curl:*)"
+    ],
+    "deny": []
+  }
+}

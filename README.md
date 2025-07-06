@@ -52,7 +52,8 @@ cd chat-data-mcp-tools-ui
 Create a virtual environment and install dependencies using `uv`:
 
 ```bash
-uv venv
+# uv venv
+ uv venv .venv --python=3.11
 # On Windows, activate with: .venv\Scripts\activate
 # On macOS/Linux, activate with: source .venv/bin/activate
 uv pip install -r requirements.txt
@@ -89,14 +90,29 @@ DISABLE_LLM_CALLS=false
 To run all unit and integration tests:
 
 ```bash
-uv run pytest
+uv run pytest -v --timeout=10
 ```
 
 To run the optional real LLM test (requires a valid `LLM_API_KEY` in `.env`):
 
 ```bash
-uv run pytest -m real_llm
+uv run pytest -m real_llm -v --timeout=10
 ```
+
+#### Frontend/Browser Tests with Playwright
+
+For comprehensive frontend testing including JavaScript error detection and Alpine.js integration:
+
+```bash
+# Install Playwright browsers and system dependencies
+playwright install chromium
+playwright install-deps  # Install system dependencies (Linux)
+
+# Run frontend browser tests
+uv run pytest tests/test_frontend_playwright.py -v --timeout=10
+```
+
+**Note**: Playwright tests require Chromium browser and system dependencies. If you encounter import errors, ensure you've run the installation commands above.
 
 ### 6. Running the Application
 

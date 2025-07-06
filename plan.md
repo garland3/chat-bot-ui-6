@@ -194,7 +194,7 @@ Tools as configuration parameters that modify LLM behavior:
    - Container build and push to GitHub Container Registry (ghcr.io)
    - Multi-stage builds for optimization
    - before committing make sure the tests pass. Add a time out when running the tests to prevent hanging:
-   `uv run pytest -v tests --timeout=20`
+   `uv run pytest -v tests --timeout=10`
    - After each phase of of the project, be sure that it is sufficiently tested. Add new tests as needed to cover new features and functionality.
 7. **DevContainer Setup**:
    - .devcontainer/devcontainer.json (with uv and Python 3.12)
@@ -524,9 +524,16 @@ These new phases should be implemented after the original Phase 6 completion. Ea
 ## Testing Guidelines
 
 - **Test Timeouts**: Use `pytest-timeout` plugin to prevent hanging tests. Run tests with timeout flags:
-  - Chat tests: `uv run pytest -v tests/test_chat.py --timeout=20`
-  - Full test suite: `uv run pytest -v --timeout=60`
+  - Chat tests: `uv run pytest -v tests/test_chat.py --timeout=10`
+  - Full test suite: `uv run pytest -v --timeout=10`
   - This prevents tests from hanging indefinitely due to network issues or infinite loops
+
+
+```
+
+uv run pytest -v --timeout=10
+
+```
 
 
 NOTe:

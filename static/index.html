@@ -6,6 +6,8 @@
     <title>Galaxy Chat</title>
     <link rel="stylesheet" href="/static/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <!-- Load Alpine components BEFORE Alpine.js -->
+    <script src="/static/app-modular.js"></script>
     <!-- Alpine.js for reactive UI components -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </head>
@@ -36,7 +38,7 @@
                      x-data="toolsDropdown" 
                      x-init="init()"
                      :class="{ active: isOpen }"
-                     @click.away="close()">
+                     @click.outside="close()">
                     <button class="btn btn-secondary dropdown-toggle" 
                             @click="toggle()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -50,38 +52,11 @@
                         <label class="checkbox-item">
                             <input type="checkbox" 
                                    name="tools" 
-                                   value="basic_math"
-                                   :checked="isToolSelected('basic_math')"
-                                   @change="toggleTool('basic_math')">
+                                   value="calculator"
+                                   :checked="isToolSelected('calculator')"
+                                   @change="toggleTool('calculator')">
                             <span class="checkmark"></span>
-                            Basic Math
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" 
-                                   name="tools" 
-                                   value="code_execution"
-                                   :checked="isToolSelected('code_execution')"
-                                   @change="toggleTool('code_execution')">
-                            <span class="checkmark"></span>
-                            Code Execution
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" 
-                                   name="tools" 
-                                   value="user_lookup"
-                                   :checked="isToolSelected('user_lookup')"
-                                   @change="toggleTool('user_lookup')">
-                            <span class="checkmark"></span>
-                            User Lookup
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" 
-                                   name="tools" 
-                                   value="sql_query"
-                                   :checked="isToolSelected('sql_query')"
-                                   @change="toggleTool('sql_query')">
-                            <span class="checkmark"></span>
-                            SQL Query
+                            Calculator
                         </label>
                     </div>
                 </div>
@@ -128,11 +103,11 @@
                     </button>
                     <div class="dropdown-menu" x-show="isOpen" x-transition>
                         <div class="dropdown-header">Select AI Model</div>
-                        <template x-for="llm in availableLLMs" :key="llm.name">
+                        <template x-for="llm in availableLLMs" :key="llm">
                             <div class="radio-item" 
-                                 :class="{ selected: isLLMSelected(llm.name) }"
+                                 :class="{ selected: isLLMSelected(llm) }"
                                  @click="selectLLM(llm)"
-                                 x-text="llm.name">
+                                 x-text="llm">
                             </div>
                         </template>
                     </div>
@@ -160,7 +135,7 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Chat Area -->
-            <div class="chat-container" id="chatContainer">
+            <div class="chat-container" id="chatContainer" x-data="chatApp()">
                 <div class="welcome-screen" id="welcomeScreen">
                     <div class="welcome-content">
                         <h2>Welcome to Galaxy Chat</h2>
@@ -252,15 +227,5 @@
             enableDebug: true
         };
     </script>
-    
-    <!-- Alpine.js Components (must load before Alpine.js) -->
-    <script src="/static/js/components/AlpineComponents.js"></script>
-    
-    <!-- Use modular version with ES6 modules -->
-    <script type="module" src="/static/app-modular.js"></script>
-    
-    <!-- Fallback to original for browsers without module support -->
-    <script type="module" src="/static/app-modular.js"></script>
-    <script nomodule src="/static/app.js"></script>
 </body>
 </html>
