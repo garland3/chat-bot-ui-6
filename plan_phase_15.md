@@ -16,12 +16,12 @@ This part focuses on writing tests that will initially fail but define exactly h
 The key challenge here is writing tests that fail for the right reasons - they should fail because the current implementation executes tools instead of treating them as configuration, and because the current system uses dual LLM calls instead of single streaming responses. The tests should also define the expected Alpine.js integration points and API contracts for the frontend.
 
 **Success Criteria**:
-- [ ] 8-10 new failing tests written in `test_phase_15_architecture.py`
-- [ ] Tests cover tool selection as configuration (not execution)
-- [ ] Tests verify system prompt modification based on tool selection
-- [ ] Tests ensure single streaming response pattern for all interactions
-- [ ] Tests define Alpine.js integration contracts
-- [ ] All new tests fail initially due to current tool execution logic
+- [x] 8-10 new failing tests written in `test_phase_15_architecture.py`
+- [x] Tests cover tool selection as configuration (not execution)
+- [x] Tests verify system prompt modification based on tool selection
+- [x] Tests ensure single streaming response pattern for all interactions
+- [x] Tests define Alpine.js integration contracts
+- [x] All new tests fail initially due to current tool execution logic
 ---
 
 ## Part 2: Backend Tool Execution Removal
@@ -32,14 +32,14 @@ This part involves surgically removing the tool execution logic from the chat ro
 The implementation should maintain backward compatibility for all non-tool functionality while completely changing how tools are handled. Tool selections should be logged and potentially streamed to the frontend for user feedback, but no actual tool execution should occur. The system prompt should be dynamically modified to include relevant tool capabilities based on user selections.
 
 **Success Criteria**:
-- [ ] Tool execution logic removed from `/app/app/routers/chat.py` (lines 149-204)
-- [ ] Dual LLM call pattern replaced with single streaming call
-- [ ] System prompt modification implemented based on tool selection
-- [ ] Tool selections logged and streamed to frontend ("tool:selected calculator")
-- [ ] All existing streaming functionality preserved
-- [ ] Session management unchanged
-- [ ] WebSocket communication maintained
-- [ ] Calculator tool demo system prompt includes mathematical capabilities
+- [x] Tool execution logic removed from `/app/app/routers/chat.py` (lines 149-204)
+- [x] Dual LLM call pattern replaced with single streaming call
+- [x] System prompt modification implemented based on tool selection
+- [x] Tool selections logged and streamed to frontend ("tool:selected calculator")
+- [x] All existing streaming functionality preserved
+- [x] Session management unchanged
+- [x] WebSocket communication maintained
+- [x] Calculator tool demo system prompt includes mathematical capabilities
 
 ---
 
@@ -51,13 +51,13 @@ This part focuses on updating the chat API endpoints to accept the new parameter
 The API changes should be minimal and non-breaking, with optional parameters that default to empty arrays or null values. The endpoint should validate the incoming parameters and provide clear error messages for invalid tool or data source selections. The response format should remain the same streaming format, but may include additional metadata about tool selections in the stream.
 
 **Success Criteria**:
-- [ ] Chat API accepts `selected_tools` array parameter
-- [ ] Chat API accepts `selected_data_sources` array parameter  
-- [ ] Chat API accepts `llm_name` parameter
-- [ ] Parameters stored in session state
-- [ ] Backward compatibility maintained (parameters optional)
-- [ ] Parameter validation with clear error messages
-- [ ] Tool selections included in session logging
+- [x] Chat API accepts `selected_tools` array parameter
+- [x] Chat API accepts `selected_data_sources` array parameter  
+- [x] Chat API accepts `llm_name` parameter
+- [x] Parameters stored in session state
+- [x] Backward compatibility maintained (parameters optional)
+- [x] Parameter validation with clear error messages
+- [x] Tool selections included in session logging
 
 ---
 
@@ -69,14 +69,14 @@ This part involves building a flexible system prompt engine that can dynamically
 The system prompt engine should be modular and extensible, allowing for easy addition of new tools and data sources in the future. It should also support different prompt templates for different LLM providers if needed. The engine should be well-tested and include logging of the final system prompts for debugging purposes.
 
 **Success Criteria**:
-- [ ] Base system prompt loader from `system_prompt.md`
-- [ ] Dynamic prompt modification for calculator tool selection
-- [ ] Modular prompt sections for different tools
-- [ ] Data source context integration in system prompts
-- [ ] System prompt logging for debugging
-- [ ] Support for multiple tool combinations
-- [ ] Extensible architecture for future tools
-- [ ] LLM provider-specific prompt templates (if needed)
+- [x] Base system prompt loader from `system_prompt.md`
+- [x] Dynamic prompt modification for calculator tool selection
+- [x] Modular prompt sections for different tools
+- [x] Data source context integration in system prompts
+- [x] System prompt logging for debugging
+- [x] Support for multiple tool combinations
+- [x] Extensible architecture for future tools
+- [x] LLM provider-specific prompt templates (if needed)
 
 ---
 
