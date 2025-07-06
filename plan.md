@@ -40,26 +40,25 @@ A modern chatbot UI application built with FastAPI backend and responsive fronte
 
 ### 3. Tools System
 
-Built-in tools implementing abstract base class:
+Tools as configuration parameters that modify LLM behavior:
 
-1. **BasicMathTool**: Arithmetic operations
-2. **CodeExecutionTool**: Python code execution in sandboxed environment
-3. **UserLookupTool**: User information lookup from database
-4. **SQLQueryTool**: Database query execution with safety constraints
+1. **Calculator Tool**: Demo tool that modifies system prompt for mathematical operations
+2. **Future Tools**: Placeholder for additional tool configurations
 
 **Tool Features**:
 
-- OpenAI-compatible tool calling format
-- Timeout protection for all tool calls
-- UI modification capabilities (buttons, plots, custom components)
-- Modular design in `tools/` folder
+- Tool selection sent as extra arguments to backend
+- Tool selection modifies system prompt and execution path
+- Tool selections logged and streamed to frontend (e.g., "tool:selected calculator")
+- No actual tool execution - future-proofing for custom workflows
+- Modular design in `tools/` folder for tool definitions
 
 ### 4. Data Sources
 
-- **Current**: Hardcoded placeholders
-- **Future**: API/database integration
-- **Access Control**: Permission-based access per user
-- **API Endpoint**: `/data` endpoint for frontend queries
+- **Current**: Configuration parameters sent to backend
+- **Future**: Custom RAG system integration
+- **Behavior**: Data sources sent as extra arguments, streaming responses maintained
+- **Future-Proofing**: Placeholder for advanced data source workflows
 
 ## Technical Requirements
 
@@ -218,11 +217,11 @@ Built-in tools implementing abstract base class:
 
 ### Phase 4: Tools & Data Sources
 
-1. Abstract tool base class
-2. Basic tool implementations
-3. SQLite database setup
-4. Tool calling integration
-5. Data source API endpoint
+1. Tool configuration definitions
+2. Calculator tool demo setup
+3. System prompt modification for tools
+4. Tool selection logging and streaming
+5. Data source parameter handling
 
 ### Phase 5: Frontend & UX
 
@@ -446,32 +445,75 @@ llms:
    - Set single worker configuration or remove worker specification ✅ (Already implemented)
    - Ensure proper ASGI server for WebSocket support ✅ (Already implemented)
 
-### Phase 14: Progressive Alpine.js Integration
+### Phase 14: Alpine.js Integration (Updated for New Architecture)
 
-1. **Modular Architecture Foundation** ✅:
-   - ES6 modules implemented with clean separation of concerns
-   - State management, services, and components properly separated
-   - Backward compatibility maintained with original app.js
+1. **Reactive Component Architecture** ✅:
+   - Alpine.js CDN integration for lightweight reactivity
+   - Main container with `x-data="chatApp()"` directive
+   - Reactive state management without virtual DOM overhead
+   - HTML-attribute syntax with minimal learning curve
 
-2. **Alpine.js Progressive Enhancement**:
-   - Add Alpine.js CDN to index.html for lightweight reactivity
-   - Convert connection status component to Alpine.js reactive component
-   - Implement Alpine.js for dropdown state management
-   - Transform toast notifications to use Alpine.js reactivity
-   - Gradually migrate form interactions and UI state to Alpine.js
+2. **State Management Implementation**:
+   ```javascript
+   // Alpine.js data structure
+   {
+     messages: [],
+     currentMessage: '',
+     selectedModel: '',
+     selectedTools: [],
+     selectedDataSources: [],
+     availableModels: [],
+     isStreaming: false
+   }
+   ```
 
-3. **Benefits of Alpine.js Integration**:
-   - Declarative reactive UI updates without virtual DOM overhead
-   - Minimal learning curve with HTML-attribute syntax
-   - Perfect complement to existing modular ES6 architecture
+3. **Streaming Integration**:
+   - Fetch API with ReadableStream for streaming responses
+   - `reader.read()` loop for chunk processing
+   - Automatic DOM updates via Alpine reactivity
+   - Real-time message updates without manual DOM manipulation
+
+4. **Benefits of New Approach**:
+   - Simplified state management with Alpine.js
+   - Automatic UI updates when data changes
+   - Clean separation between configuration and execution
+   - Future-ready for custom workflows and RAG systems
    - No build step required - works directly in browser
-   - Incremental adoption without breaking existing functionality
 
-4. **Migration Strategy**:
-   - Start with simple UI state (connection status, typing indicators)
-   - Move to interactive components (dropdowns, form validation)
-   - Enhance with reactive data binding for selected tools/models
-   - Maintain existing WebSocket and API service architecture
+### Phase 15: Architectural Redesign - Simplified Streaming Approach
+
+#### **New Architecture Principles**:
+1. **Single Streaming Pattern**: All interactions result in streaming LLM responses
+2. **Configuration-Based Tools**: Tools and data sources are configuration parameters, not executable functions
+3. **System Prompt Modification**: Tool selection modifies LLM behavior via system prompt
+4. **Future-Proofing**: Prepared for custom RAG and workflow systems
+
+#### **Implementation Strategy**:
+
+**Backend Changes**:
+- Remove tool execution logic entirely
+- Implement system prompt modification based on selections
+- Single LLM call with streaming response for all interactions
+- Tool selection logging without execution
+
+**Frontend Changes (Alpine.js Integration)**:
+- Reactive component architecture with `x-data="chatApp()"`
+- State management: `{messages: [], selectedModel: '', selectedTools: [], selectedDataSources: []}`
+- Streaming via Fetch API with ReadableStream reader
+- Automatic DOM updates through Alpine reactivity
+
+**API Flow**:
+```
+POST /api/chat {
+  message,
+  model: selectedModel,
+  tools: selectedTools,
+  dataSources: selectedDataSources
+}
+→ System prompt modification
+→ Single streaming LLM response
+→ Real-time UI updates
+```
 
 ### Implementation Priority
 
@@ -490,11 +532,24 @@ These new phases should be implemented after the original Phase 6 completion. Ea
 NOTe:
 when commiting there is some persistent issue that doesn't allow using the cli. Instead write the commit message in the file `commit_message.txt` and then git commit command.
 
-NOTE: phase 14 is on going and incremental. 
+NOTE: Phase 14-15 represent the architectural redesign to a simplified streaming approach where tools are configuration parameters rather than executable functions. This aligns with future-proofing for custom RAG and workflow systems. 
 
 
 Status:
-1-13 are done.
-14 is ongoing and incremental.
+- Phases 1-13: ✅ COMPLETED
+- Phase 14: 🔄 UPDATED for new architecture (Alpine.js integration)
+- Phase 15: 🆕 NEW architectural redesign phase
+
+### Current Implementation Status:
+- **Planning**: ✅ Complete (Plan updated, tests reviewed)
+- **Backend**: ❌ Requires tool execution removal
+- **Frontend**: 🔄 Needs Alpine.js integration update
+- **Tests**: 🔄 New approach tests added, conflicts need resolution
+
+### Critical Path:
+1. Remove tool execution logic from backend
+2. Implement system prompt modification
+3. Update Alpine.js integration for new architecture
+4. Align tests with streaming-only approach
 
 

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        DEV_MODE: "true"
+    user: root
+    volumes:
+      - .:/app
+      - /app/.venv  # Prevent mounting over virtual environment if it exists
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    command: >
+      bash -c "
+        pip install -e . &&
+        python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "

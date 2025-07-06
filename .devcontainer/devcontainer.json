@@ -1,14 +1,36 @@
 
 {
     "name": "Chat Data MCP Tools UI",
-    "dockerComposeFile": "../docker-compose.yml",
+    "dockerComposeFile": [
+        "../docker-compose.yml",
+        "../docker-compose.dev.yml"
+    ],
     "service": "app",
     "workspaceFolder": "/app",
+    "remoteUser": "root",
+    "overrideCommand": false,
+    "shutdownAction": "stopCompose",
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "nodeGypDependencies": true,
+            "version": "lts"
+        }
+    },
     "customizations": {
         "vscode": {
             "extensions": [
-                "ms-python.python"
-            ]
+                "ms-python.python",
+                "ms-python.flake8",
+                "ms-python.black-formatter",
+                "ms-toolsai.jupyter"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.linting.enabled": true,
+                "python.linting.flake8Enabled": true,
+                "python.formatting.provider": "black"
+            }
         }
     }
+    // "postCreateCommand": "pip install -e ."
 }

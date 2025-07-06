@@ -1,9 +1,0 @@
-app.js:78 init(): Application initialization started.
-app.js:91 Setting up event listeners...
-app.js:136 Uncaught (in promise) TypeError: Cannot read properties of null (reading 'addEventListener')
-    at setupEventListeners (app.js:136:16)
-    at init (app.js:79:9)
-    at HTMLDocument.<anonymous> (app.js:32:5)
-setupEventListeners @ app.js:136
-init @ app.js:79
-(anonymous) @ app.js:32

@@ -10,3 +10,6 @@ services:
       - .:/app
     env_file:
       - .env
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1

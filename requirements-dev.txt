@@ -3,3 +3,4 @@ pytest-timeout
 httpx
 pytest-asyncio
 pytest-mock
+beautifulsoup4

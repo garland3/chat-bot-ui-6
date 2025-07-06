@@ -60,41 +60,35 @@ async def chat_message(session_id: str, request: Request, message: dict):
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    # Handle LLM configuration from the request
-    llm_config = message.get("llm_config")
-    llm_name = message.get("llm_name")  # Legacy support
-    
-    if llm_config:
-        # New format with full config object
-        try:
-            llm_client.set_llm(llm_config.get("name"))
-            log_session_event(session_id, {"event": "llm_changed", "llm_config": llm_config})
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=f"Invalid LLM selection: {e}")
-    elif llm_name:
-        # Legacy format with just name
+    # Extract new parameters
+    selected_tool_names = message.get("selected_tools", [])
+    selected_data_sources = message.get("selected_data_sources", [])
+    llm_name = message.get("llm_name")
+
+    # Store in session
+    session_manager.update_session_tools(session_id, selected_tool_names)
+    session_manager.update_session_data_sources(session_id, selected_data_sources)
+    if llm_name:
         try:
             llm_client.set_llm(llm_name)
             log_session_event(session_id, {"event": "llm_changed", "llm_name": llm_name})
         except ValueError as e:
             raise HTTPException(status_code=400, detail=f"Invalid LLM selection: {e}")
 
+    # Log the selections
+    log_session_event(session_id, {"event": "parameters_updated", "selected_tools": selected_tool_names, "selected_data_sources": selected_data_sources, "llm_name": llm_name})
+
+
     if settings.disable_llm_calls:
         return {"response": "LLM calls are disabled."}
 
     user_message = {"role": "user", "content": message.get("content", "")}
     session_messages = session.get("messages", [])
-
-    selected_data_sources = message.get("data_sources", [])
-    session_manager.update_session_data_sources(session_id, selected_data_sources)
     
     # Add system message to session if this is the first user message
     if not session_messages:
         system_prompt_content = settings.system_prompt_override
         if not system_prompt_content:
-            system_prompt_content = app.main.SYSTEM_PROMPT_CONTENT
-        if not system_prompt_content:
-            # Fallback if global isn't set (e.g., in tests)
             try:
                 with open("system_prompt.md", "r", encoding="utf-8") as f:
                     system_prompt_content = f.read()
@@ -104,8 +98,12 @@ async def chat_message(session_id: str, request: Request, message: dict):
         if selected_data_sources:
             system_prompt_content += "\n\nThe user has access to the following data sources: " + ", ".join(selected_data_sources)
 
+        if 'calculator' in selected_tool_names:
+            system_prompt_content += "\n\nYou have access to a calculator and should use it for any mathematical calculations. Frame your thinking process in calculations."
+
         system_message = {"role": "system", "content": system_prompt_content}
         session_messages.append(system_message)
+
     
     session_messages.append(user_message)
     log_session_event(session_id, {"event": "user_message", "message": user_message})
@@ -133,108 +131,40 @@ async def chat_message(session_id: str, request: Request, message: dict):
 
     selected_data_sources = message.get("data_sources", [])
     session_manager.update_session_data_sources(session_id, selected_data_sources)
-    if selected_tool_names:
-        # Filter tools to only include selected ones
-        all_tools = tool_manager.get_all_tool_definitions()
-        available_tools = [tool for tool in all_tools if tool["function"]["name"] in selected_tool_names]
-    else:
-        # No tools selected, provide all tools to the LLM
-        available_tools = tool_manager.get_all_tool_definitions()
+    # System prompt modification based on tool selection
+    system_message = next((m for m in messages if m['role'] == 'system'), None)
+    if system_message:
+        if 'calculator' in selected_tool_names:
+            system_message['content'] += "\n\nYou have access to a calculator and should use it for any mathematical calculations. Frame your thinking process in calculations."
 
-    try:
-        # First call to LLM to check for tool calls (not streaming initially)
-        llm_response = llm_client.chat_completion(messages=messages, tools=available_tools, stream=False)
-        response_message = llm_response.json()["choices"][0]["message"]
+    
+    def generate_response():
+        # Log and stream tool selection
+        for tool_name in selected_tool_names:
+            log_session_event(session_id, {"event": "tool_selected", "tool_name": tool_name})
+            yield f"tool:selected {tool_name}\n"
 
-        # Check if the LLM wants to call a tool
-        if response_message.get("tool_calls"):
-            tool_calls = response_message["tool_calls"]
-            log_session_event(session_id, {"event": "tool_call", "tool_calls": tool_calls})
-            messages.append(response_message) # Add assistant's tool call to messages
+        
+        full_content = ""
+        try:
+            for chunk in llm_client.chat_completion(messages=messages, stream=True):
+                if chunk.startswith(b'data:'):
+                    chunk = chunk[len(b'data:'):].strip()
+                if chunk == b'[DONE]':
+                    break
+                if chunk:
+                    try:
+                        data = json.loads(chunk)
+                        content = data["choices"][0]["delta"].get("content", "")
+                        full_content += content
+                        yield content
+                    except json.JSONDecodeError:
+                        continue
+        finally:
+            if full_content:
+                assistant_response = {"role": "assistant", "content": full_content}
+                session_messages.append(assistant_response)
+                log_session_event(session_id, {"event": "assistant_response", "response": assistant_response})
+                session_manager.update_session_messages(session_id, session_messages)
 
-            for tool_call in tool_calls:
-                tool_name = tool_call["function"]["name"]
-                tool_args = json.loads(tool_call["function"]["arguments"])
-
-                tool = tool_manager.get_tool(tool_name)
-                if tool:
-                    tool_output = tool.execute(**tool_args)
-                    tool_output_message = {
-                        "tool_call_id": tool_call["id"],
-                        "role": "tool",
-                        "name": tool_name,
-                        "content": json.dumps(tool_output)
-                    }
-                    messages.append(tool_output_message)
-                    log_session_event(session_id, {"event": "tool_output", "output": tool_output_message})
-                else:
-                    tool_output_message = {
-                        "tool_call_id": tool_call["id"],
-                        "role": "tool",
-                        "name": tool_name,
-                        "content": "Tool not found."
-                    }
-                    messages.append(tool_output_message)
-                    log_session_event(session_id, {"event": "tool_error", "error": tool_output_message})
-            
-            # Second call to LLM with tool output, this time streaming
-            def generate_tool_response():
-                full_content = ""
-                try:
-                    for chunk in llm_client.chat_completion(messages=messages, tools=available_tools, stream=True):
-                        if chunk.startswith(b'data:'):
-                            chunk = chunk[len(b'data:'):].strip()
-                        if chunk == b'[DONE]':
-                            break
-                        if chunk:
-                            try:
-                                data = json.loads(chunk)
-                                content = data["choices"][0]["delta"].get("content", "")
-                                full_content += content
-                                yield content
-                            except json.JSONDecodeError:
-                                continue
-                finally:
-                    # Append LLM's response to session messages after streaming is complete
-                    if full_content:
-                        assistant_response = {"role": "assistant", "content": full_content}
-                        session_messages.append(assistant_response)
-                        log_session_event(session_id, {"event": "assistant_response", "response": assistant_response})
-                        session_manager.update_session_messages(session_id, session_messages)
-            return StreamingResponse(generate_tool_response(), media_type="text/event-stream")
-        else:
-            # If not a tool call, use the response content from the first call and stream additional content if needed
-            initial_content = response_message.get("content", "")
-            
-            def generate_response():
-                full_content = initial_content
-                # First yield the initial content
-                if initial_content:
-                    yield initial_content
-                
-                # Then stream additional content if the LLM has more to say
-                try:
-                    for chunk in llm_client.chat_completion(messages=messages, stream=True):
-                        if chunk.startswith(b'data:'):
-                            chunk = chunk[len(b'data:'):].strip()
-                        if chunk == b'[DONE]':
-                            break
-                        if chunk:
-                            try:
-                                data = json.loads(chunk)
-                                content = data["choices"][0]["delta"].get("content", "")
-                                full_content += content
-                                yield content
-                            except json.JSONDecodeError:
-                                continue
-                finally:
-                    # Append LLM's response to session messages after streaming is complete
-                    if full_content:
-                        assistant_response = {"role": "assistant", "content": full_content}
-                        session_messages.append(assistant_response)
-                        log_session_event(session_id, {"event": "assistant_response", "response": assistant_response})
-                        session_manager.update_session_messages(session_id, session_messages)
-            return StreamingResponse(generate_response(), media_type="text/event-stream")
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"LLM error: {e}")
+    return StreamingResponse(generate_response(), media_type="text/event-stream")
