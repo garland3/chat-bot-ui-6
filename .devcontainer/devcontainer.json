@@ -9,6 +9,15 @@
     "workspaceFolder": "/app",
     "remoteUser": "root",
     "overrideCommand": true,
+    
+    // Forward SSH agent for git operations
+    "forwardPorts": [],
+    "mounts": [
+        "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
+    ],
+    "remoteEnv": {
+        "SSH_AUTH_SOCK": "${localEnv:SSH_AUTH_SOCK}"
+    },
 
     "shutdownAction": "stopCompose",
     "features": {
