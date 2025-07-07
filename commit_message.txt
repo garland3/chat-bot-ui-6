@@ -1,8 +1,0 @@
-fix: Ensure send button is disabled when LLM is loading
-
-Corrected a frontend bug where the "Send" button was enabled even when the LLM model was in a "Loading..." state, potentially leading to premature message sending and backend errors.
-
-- Re-enabled the `disabled` attribute on the "Send" button in `static/index.html`.
-- Added a Beautiful Soup test (`test_send_button_disabled_when_llm_loading`) to `tests/test_frontend_ui.py` to ensure the button is disabled in this state.
-
-This addresses a potential frontend cause for the 500 Internal Server Error reported in issue #4, by preventing invalid requests from being sent to the backend.

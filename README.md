@@ -157,7 +157,7 @@ This project includes a GitHub Actions workflow (`.github/workflows/ci-cd.yml`) 
 │   └── utils/
 ├── tools/
 ├── access_control/
-├── static/
+├── frontend/                  # NPM-based frontend (Alpine.js + Vite)
 ├── data/
 ├── docker/
 ├── Dockerfile

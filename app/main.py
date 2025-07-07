@@ -84,7 +84,8 @@ app.include_router(data.router, prefix="/api/data")
 app.include_router(llm_configs.router)
 app.include_router(theme.router)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount frontend static files from built assets
+app.mount("/static", StaticFiles(directory="frontend/dist"), name="static")
 
 @app.get("/health")
 def health_check():
@@ -96,7 +97,20 @@ def test_auth(request: Request):
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_frontend():
-    with open("static/index.html", "r", encoding="utf-8") as f:
-        html_content = f.read()
+    try:
+        with open("frontend/dist/index.html", "r", encoding="utf-8") as f:
+            html_content = f.read()
+    except FileNotFoundError:
+        # Fallback during development if frontend hasn't been built yet
+        html_content = """
+        <!DOCTYPE html>
+        <html>
+        <head><title>Galaxy Chat</title></head>
+        <body>
+            <h1>Frontend Not Built</h1>
+            <p>Please run: <code>cd frontend && npm run build</code></p>
+        </body>
+        </html>
+        """
     
     return html_content

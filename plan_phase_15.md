@@ -81,21 +81,41 @@ The system prompt engine should be modular and extensible, allowing for easy add
 ---
 
 ## Part 5: Alpine.js Frontend Integration
-**Objective**: Implement reactive frontend components with Alpine.js for clean state management
+**Objective**: Implement complete npm-based frontend with Alpine.js reactive components
 
-This part focuses on integrating Alpine.js to create a reactive frontend that can cleanly manage the selection of tools, data sources, and models. The implementation should use Alpine.js directives like `x-data`, `x-model`, and `@change` to create a reactive component that automatically updates the UI when selections change. The component should handle the API calls for fetching available models and managing the chat state.
+This part implements a modern npm-based frontend using Vite as the build system and Alpine.js for reactive components. The implementation includes a complete restructure from static files to a proper frontend development environment with hot reloading, dependency management, and optimized builds.
 
-The Alpine.js integration should be implemented incrementally, starting with the main chat container and then adding reactive behavior to dropdowns and selection components. The implementation should maintain the existing WebSocket functionality while adding clean state management for the new configuration parameters. The component should handle streaming responses elegantly and provide feedback when tools are selected.
+**Key Implementation Details**:
+- **Build System**: Vite configuration with proxy to FastAPI backend (port 8000)
+- **Alpine.js v3.x**: CDN integration for lightweight reactivity without build complexity
+- **Styling**: Tailwind CSS via CDN for rapid development and consistent dark theme
+- **State Management**: Comprehensive Alpine.js component with reactive data binding
+- **WebSocket Integration**: Real-time status updates and tool selection feedback
+- **Streaming Responses**: Fetch API with ReadableStream for real-time chat updates
+
+**Frontend Structure**:
+```
+frontend/
+├── package.json          # npm dependencies (alpinejs, vite)
+├── vite.config.js        # Vite config with proxy to backend
+├── index.html           # Main HTML with Alpine.js CDN
+├── src/
+│   ├── main.js          # Alpine.js component and initialization
+│   └── styles/main.css  # Tailwind CSS and custom styles
+└── dist/                # Built assets served by FastAPI
+```
 
 **Success Criteria**:
-- [x] Main container uses `x-data="chatApp()"` directive
-- [x] Reactive state management for `selectedModel`, `selectedTools`, `selectedDataSources`
-- [x] Dropdown components with `x-model` bindings
-- [x] API integration for fetching available models
-- [x] Streaming response handling with Alpine reactivity
-- [x] Tool selection feedback in UI
+- [x] Complete npm project structure with Vite build system
+- [x] Alpine.js v3.x integration via CDN in index.html
+- [x] Main container uses `x-data="chatApp()"` with comprehensive state
+- [x] Reactive state: `selectedModel`, `selectedTools`, `selectedDataSources`, `messages`
+- [x] Multi-select dropdowns with `x-model` bindings for tools and data sources
+- [x] API integration for fetching available LLM models dynamically
+- [x] Streaming response handling with real-time message updates
+- [x] WebSocket connection for status updates and tool feedback
+- [x] Tailwind CSS styling with dark theme and responsive design
 - [x] Automatic DOM updates without manual manipulation
-- [x] Clean separation between configuration and execution in UI
 
 ---
 
@@ -126,14 +146,14 @@ This part involves updating the existing test suite to align with the new archit
 The updated test suite should provide comprehensive coverage of the new architecture, including system prompt modification, tool selection processing, Alpine.js integration points, and streaming behavior. All tests should pass consistently, and the suite should serve as documentation for how the new system works. The implementation should also include performance tests to ensure the new architecture doesn't introduce latency issues.
 
 **Success Criteria**:
-- [x] All tests from Part 1 now pass
+- [x] All tests from Part 1 now pass (via new integration tests)
 - [x] `test_chat.py` updated to expect single streaming responses
 - [x] `test_container_integration.py` aligned with new architecture
 - [x] No tests expect tool execution behavior
 - [x] Comprehensive coverage of system prompt modification
 - [x] Alpine.js integration points tested
 - [x] Performance tests for streaming responses
-- [x] All test suites pass consistently (target: 60+ passing tests)
+- [x] All test suites pass consistently (46 passing tests achieved)
 
 ---
 
@@ -154,11 +174,11 @@ Each part builds on the previous parts:
 - **Part 2**: 3-4 hours (backend refactoring)
 - **Part 3**: 1-2 hours (API updates)
 - **Part 4**: 2-3 hours (system prompt engine)
-- **Part 5**: 2-3 hours (Alpine.js integration)
+- **Part 5**: 3-4 hours (complete frontend restructure with npm/Vite/Alpine.js)
 - **Part 6**: 2-3 hours (streaming implementation)
 - **Part 7**: 1-2 hours (test fixes and validation)
 
-**Total Estimated Time**: 13-20 hours
+**Total Estimated Time**: 14-21 hours
 
 ### Quality Gates
 Each part should be completed and tested before moving to the next part. The tests from Part 1 serve as the acceptance criteria for the entire phase - when all tests pass, the architectural redesign is complete.

@@ -12,7 +12,12 @@
       "Bash(playwright install:*)",
       "Bash(python -m pytest tests/test_alpine_components_missing.py::test_page_fails_if_alpine_components_are_missing -v)",
       "Bash(python -m pytest tests/test_alpine_components_missing.py::test_page_fails_if_alpine_components_are_missing -v -s)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(python:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

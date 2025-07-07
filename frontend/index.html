@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxy Chat</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body class="bg-gray-900 text-white">
+    <div id="app" x-data="chatApp()" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-gray-800 p-4 shadow-lg">
+            <h1 class="text-2xl font-bold text-center">Galaxy Chat</h1>
+        </header>
+
+        <!-- Main Chat Container -->
+        <main class="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4">
+            <!-- Configuration Panel -->
+            <div class="mb-4 p-4 bg-gray-800 rounded-lg">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Model Selection -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1">LLM Model:</label>
+                        <select x-model="selectedModel" class="w-full p-2 bg-gray-700 border border-gray-600 rounded">
+                            <option value="">Select Model...</option>
+                            <template x-for="model in availableModels" :key="model.name">
+                                <option :value="model.name" x-text="model.name"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <!-- Tools Selection -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Tools:</label>
+                        <select x-model="selectedTools" multiple class="w-full p-2 bg-gray-700 border border-gray-600 rounded h-20">
+                            <option value="calculator">Calculator</option>
+                            <option value="code_execution">Code Execution</option>
+                            <option value="user_lookup">User Lookup</option>
+                        </select>
+                    </div>
+
+                    <!-- Data Sources Selection -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Data Sources:</label>
+                        <select x-model="selectedDataSources" multiple class="w-full p-2 bg-gray-700 border border-gray-600 rounded h-20">
+                            <option value="employees">Employee Data</option>
+                            <option value="products">Product Catalog</option>
+                            <option value="orders">Order History</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="flex-1 bg-gray-800 rounded-lg p-4 mb-4 overflow-y-auto max-h-96" id="messages">
+                <template x-for="message in messages" :key="message.id">
+                    <div class="mb-4">
+                        <div :class="message.role === 'user' ? 'text-blue-300' : 'text-green-300'" 
+                             class="font-semibold mb-1" x-text="message.role === 'user' ? 'You:' : 'Assistant:'"></div>
+                        <div class="text-gray-200 whitespace-pre-wrap" x-html="message.content"></div>
+                    </div>
+                </template>
+                
+                <!-- Streaming indicator -->
+                <div x-show="isStreaming" class="text-yellow-400 italic">
+                    Assistant is typing...
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="bg-gray-800 rounded-lg p-4">
+                <div class="flex gap-2">
+                    <textarea 
+                        x-model="currentMessage" 
+                        @keydown.ctrl.enter="sendMessage()"
+                        placeholder="Type your message... (Ctrl+Enter to send)"
+                        class="flex-1 p-3 bg-gray-700 border border-gray-600 rounded-lg resize-none min-h-[80px]"
+                        :disabled="isStreaming"
+                    ></textarea>
+                    <button 
+                        @click="sendMessage()"
+                        :disabled="isStreaming || !currentMessage.trim()"
+                        class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
+                    >
+                        Send
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -24,7 +24,7 @@ app = FastAPI(
 current_test_state = {
     "running": False,
     "wait_time": 30,
-    "timeout": 20,
+    "timeout": 10,
     "last_run": None,
     "last_results": None,
     "progress": 0,
@@ -55,12 +55,12 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
-async def run_pytest(timeout: int = 20) -> Dict[str, Any]:
+async def run_pytest(timeout: int = 10) -> Dict[str, Any]:
     """Run pytest and return results"""
     try:
         cmd = [
-            "python", "-m", "pytest", f"--timeout={timeout}",
-            "-v", "--tb=short", "--json-report",
+            "uv", "run", "pytest", "-v", f"--timeout={timeout}",
+            "--tb=short", "--json-report",
             "--json-report-file=/tmp/pytest_report.json"
         ]
         
@@ -317,7 +317,7 @@ async def get_dashboard():
                 <input type="number" id="waitTime" value="30" min="1" max="3600">
                 
                 <label for="timeout">Test Timeout (seconds):</label>
-                <input type="number" id="timeout" value="20" min="1" max="300">
+                <input type="number" id="timeout" value="10" min="1" max="300">
             </div>
             
             <div class="control-group">
@@ -592,7 +592,7 @@ async def websocket_endpoint(websocket: WebSocket):
         print(f"📊 Remaining connections: {len(manager.active_connections)}")
 
 @app.post("/start")
-async def start_tests(wait_time: int = Form(30), timeout: int = Form(20)):
+async def start_tests(wait_time: int = Form(30), timeout: int = Form(10)):
     """Start continuous testing"""
     print("=" * 50)
     print("🚀 START ENDPOINT CALLED")
@@ -665,7 +665,7 @@ async def stop_tests():
 
 
 @app.post("/run-once")
-async def run_once(timeout: int = Form(20)):
+async def run_once(timeout: int = Form(10)):
     """Run tests once without continuous loop"""
     print("=" * 50)
     print("🔄 RUN-ONCE ENDPOINT CALLED")
@@ -708,7 +708,7 @@ async def favicon():
 if __name__ == "__main__":
     print("🧪 Starting PyTest Runner Web Interface...")
     print("📊 Dashboard will be available at: http://localhost:8002")
-    print("⚙️  Default settings: 30s wait time, 20s timeout")
+    print("⚙️  Default settings: 30s wait time, 10s timeout")
     print("🔄 Use Ctrl+C to stop the server")
     
     uvicorn.run(

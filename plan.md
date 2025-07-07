@@ -15,12 +15,18 @@ A modern chatbot UI application built with FastAPI backend and responsive fronte
 - **Session Management**: In-memory storage with unique session IDs
 - **Logging**: JSONL files per session with comprehensive error tracking
 
-### Frontend
+### Frontend (NPM-based)
 
-- **Design**: Dark theme, responsive design
-- **Static Assets**: Served from static folder (no Jinja templates)
-- **Real-time Updates**: WebSocket communication for status updates
-- **User Feedback**: Toast notifications (no alerts), feedback collection
+- **Architecture**: Modern npm-based frontend with Alpine.js for reactive components
+- **Package Manager**: npm for dependency management and build process
+- **Framework**: Alpine.js v3.x for lightweight reactive UI without virtual DOM
+- **Build System**: Vite for fast development server and optimized production builds
+- **Structure**: Separate `/frontend` directory with dedicated package.json and src/ structure
+- **Development**: Vite dev server (port 3000) with proxy to FastAPI backend (port 8000)
+- **Static Serving**: Built assets from `/frontend/dist` served by FastAPI at `/static` route
+- **Real-time Updates**: WebSocket communication for live status updates and tool feedback
+- **Styling**: Tailwind CSS via CDN for rapid UI development and dark theme
+- **State Management**: Alpine.js reactive data with `x-data`, `x-model`, and event handling
 
 ## Core Features
 
@@ -144,7 +150,16 @@ Tools as configuration parameters that modify LLM behavior:
 │   └── utils/                 # Utility functions
 ├── tools/                     # Tool implementations
 ├── access_control/            # Permission system (replaceable)
-├── static/                    # Frontend assets
+├── frontend/                  # NPM-based frontend application
+│   ├── package.json          # NPM dependencies (Alpine.js, Vite)
+│   ├── package-lock.json     # Locked dependency versions
+│   ├── vite.config.js        # Vite build configuration with proxy
+│   ├── index.html           # Main HTML file with Alpine.js CDN
+│   ├── src/                  # Frontend source code
+│   │   ├── main.js          # Alpine.js setup and chat component
+│   │   └── styles/          # CSS files (Tailwind via CDN)
+│   ├── public/              # Static assets (favicon, images)
+│   └── dist/                # Built frontend assets (served by FastAPI)
 ├── logs/                      # Session logs (JSONL files)
 ├── tests/                     # Test suite
 │   ├── test_health.py         # Basic health check tests
@@ -497,10 +512,13 @@ llms:
 - Tool selection logging without execution
 
 **Frontend Changes (Alpine.js Integration)**:
-- Reactive component architecture with `x-data="chatApp()"`
+- Complete npm-based frontend with Vite build system
+- Alpine.js v3.x reactive component architecture with `x-data="chatApp()"`
 - State management: `{messages: [], selectedModel: '', selectedTools: [], selectedDataSources: []}`
-- Streaming via Fetch API with ReadableStream reader
-- Automatic DOM updates through Alpine reactivity
+- Streaming via Fetch API with ReadableStream reader for real-time responses
+- Automatic DOM updates through Alpine reactivity without manual DOM manipulation
+- Tailwind CSS for rapid styling and consistent dark theme
+- WebSocket integration for live status updates and tool selection feedback
 
 **API Flow**:
 ```
