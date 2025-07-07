@@ -1,5 +1,8 @@
 import Alpine from 'alpinejs'
 
+// Make Alpine available globally for debugging
+window.Alpine = Alpine
+
 // Chat App Alpine.js Component
 document.addEventListener('alpine:init', () => {
     Alpine.data('chatApp', () => ({

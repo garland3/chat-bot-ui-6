@@ -86,6 +86,7 @@ app.include_router(theme.router)
 
 # Mount frontend static files from built assets
 app.mount("/static", StaticFiles(directory="frontend/dist"), name="static")
+app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
 
 @app.get("/health")
 def health_check():
