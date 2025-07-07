@@ -3,6 +3,7 @@ import json
 from app.utils.session_logger import log_session_event, LOGS_DIR
 from app.config import settings
 
+
 def test_log_session_event():
     session_id = "test_session_123"
     # In test mode, the log file should have "test_" prefix

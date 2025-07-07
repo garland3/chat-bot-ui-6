@@ -12,9 +12,7 @@ from typing import List, Optional
 
 router = APIRouter()
 
-@router.get("/llms")
-async def get_llms():
-    return llm_client.get_available_llms()
+# LLMs endpoint moved to llm_configs.py
 
 @router.post("/chat")
 async def create_chat_session(request: Request):

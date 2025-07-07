@@ -1,182 +1,313 @@
-# Chat Data MCP Tools UI
+# Galaxy Chat
 
-## Project Overview
+A modern AI chat application with streaming responses, multiple model support, and a ChatGPT-style interface.
 
-A modern chatbot UI application built with a FastAPI backend and a responsive frontend. The application provides an intelligent chat interface that integrates with OpenAI-compatible APIs and supports tool calling and data source integration.
+## Overview
+
+Galaxy Chat is a full-stack web application that provides an intuitive chat interface for interacting with various Large Language Models (LLMs). The application features real-time streaming responses, customizable tools, data source integration, and a responsive modern UI.
 
 ## Features
 
--   **Authentication**: Reverse proxy authentication via `X-EMAIL-USER` header.
--   **Session Management**: In-memory session storage with unique session IDs and rate limiting.
--   **LLM Integration**: OpenAI-compatible API client with streaming responses and health checks.
--   **Tools System**: Modular tool implementations for various tasks:
-    -   `BasicMathTool`: Performs arithmetic operations.
-    -   `CodeExecutionTool`: Simulates safe code snippet execution.
-    -   `UserLookupTool`: Looks up user information in a corporate directory.
-    -   `SQLQueryTool`: Executes read-only SQLite database queries.
--   **Data Sources**: API endpoint for fetching hardcoded data (extensible).
--   **Frontend**: Responsive dark-themed chat interface with real-time updates and toast notifications.
+### Core Functionality
+- **Multi-Model Support**: Choose from various LLM providers and models
+- **Real-time Streaming**: Live streaming of AI responses with typing indicators
+- **Session Management**: Persistent chat sessions with message history
+- **WebSocket Integration**: Real-time bidirectional communication
+
+### User Interface
+- **Modern ChatGPT-style UI**: Full-screen responsive design with sidebar navigation
+- **Chat Bubbles**: Distinct styling for user, assistant, and system messages
+- **Keyboard Shortcuts**: Enter to send, Shift+Enter for new lines
+- **Dark/Light Theme Support**: Automatic theme detection and switching
+
+### Tools & Data Sources
+- **Selectable Tools**: Calculator, code execution, user lookup, web search, file operations
+- **Data Sources**: Employee data, product catalog, order history, analytics, documents
+- **Checkbox Interface**: Modern selection UI instead of traditional dropdowns
 
 ## Architecture
 
 ### Backend (FastAPI)
+```
+app/
+├── main.py                 # Application entry point
+├── config.py              # Configuration management
+├── models/                 # Database models
+├── routers/               # API route handlers
+│   ├── chat.py           # Chat session endpoints
+│   ├── llm_configs.py    # Model configuration API
+│   ├── tools.py          # Tools and data sources API
+│   └── websocket.py      # WebSocket connections
+├── services/             # Business logic
+│   ├── llm_client.py     # LLM provider integration
+│   ├── session_manager.py # Chat session management
+│   └── tool_manager.py   # Tool execution logic
+└── utils/                # Utility functions
+    └── session_logger.py # Session logging
+```
 
--   FastAPI with a modular router structure.
--   LLM integration using the `requests` library (not OpenAI SDK).
--   WebSocket connections for real-time chat.
--   Authentication via `X-EMAIL-USER` header.
--   In-memory session storage.
+### Frontend (Alpine.js + Vite)
+```
+frontend/
+├── index.html            # Main HTML template
+├── src/
+│   ├── main.js          # Alpine.js application logic
+│   └── styles/
+│       └── main.css     # Tailwind CSS styles
+├── package.json         # Node.js dependencies
+└── vite.config.js       # Vite build configuration
+```
 
-### Frontend
-
--   HTML, CSS (dark theme, responsive design).
--   JavaScript for real-time updates via WebSockets and UI interactions.
--   Static assets served directly by FastAPI.
-
-## Development Setup
+## Getting Started
 
 ### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- uv (Python package manager)
 
--   Python 3.11 (or compatible version)
--   `uv` (install with `pip install uv` or follow [uv installation guide](https://github.com/astral-sh/uv#installation))
+### Installation
 
-### 1. Clone the repository
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd galaxy-chat
+   ```
 
+2. **Set up Python environment**
+   ```bash
+   uv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   uv pip install -r requirements.txt
+   uv pip install -r requirements-dev.txt
+   ```
+
+3. **Install frontend dependencies**
+   ```bash
+   cd frontend
+   npm install
+   npm run build
+   cd ..
+   ```
+
+4. **Configure environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+### Running the Application
+
+#### Development Mode
 ```bash
-git clone https://github.com/your-username/chat-data-mcp-tools-ui.git
-cd chat-data-mcp-tools-ui
+# Start backend server
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# In another terminal, start frontend dev server
+cd frontend
+npm run dev
 ```
 
-### 2. Set up the Python Environment
-
-Create a virtual environment and install dependencies using `uv`:
-
+#### Production Mode
 ```bash
-# uv venv
- uv venv .venv --python=3.11
-# On Windows, activate with: .venv\Scripts\activate
-# On macOS/Linux, activate with: source .venv/bin/activate
-uv pip install -r requirements.txt
-uv pip install -r requirements-dev.txt
+# Build frontend
+cd frontend && npm run build && cd ..
+
+# Start production server
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### 3. Database Initialization
-
-Initialize the SQLite database with sample data:
-
+#### Using Docker
 ```bash
-python data/init_db.py
+# Development
+docker-compose -f docker-compose.dev.yml up
+
+# Production
+docker-compose -f docker-compose.prod.yml up
 ```
 
-### 4. Environment Variables
+## API Endpoints
 
-Create a `.env` file in the project root based on `.env.example` and fill in your LLM API key:
+### Core Endpoints
+- `GET /` - Serve frontend application
+- `GET /health` - Health check endpoint
+- `GET /llms` - Get available LLM configurations
 
-```ini
-# .env
-LLM_BASE_URL=https://api.openai.com/v1
-LLM_API_KEY=your-openai-api-key
-LLM_MODEL_NAME=gpt-3.5-turbo
+### Chat API
+- `POST /chat` - Create new chat session
+- `POST /chat/{session_id}/message` - Send message (streaming response)
+- `GET /ws` - WebSocket connection for real-time updates
 
+### Configuration API
+- `GET /api/tools` - Get available tools
+- `GET /api/data-sources` - Get available data sources
+
+## Configuration
+
+### LLM Configuration
+Configure available models in `config/llms.yml`:
+
+```yaml
+llms:
+  - name: "Claude 3.5 Sonnet"
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-20241022"
+    api_key_env: "ANTHROPIC_API_KEY"
+  
+  - name: "GPT-4"
+    provider: "openai"
+    model: "gpt-4"
+    api_key_env: "OPENAI_API_KEY"
+```
+
+### Environment Variables
+```bash
+# API Keys
+ANTHROPIC_API_KEY=your_anthropic_key
+OPENAI_API_KEY=your_openai_key
+
+# Database
+DATABASE_URL=sqlite:///./data/app.db
+
+# Development
 TEST_MODE=false
-TEST_EMAIL=test@test.com
-
-DISABLE_WEBSOCKET=false
 DISABLE_LLM_CALLS=false
 ```
 
-### 5. Running Tests
+## Testing
 
-To run all unit and integration tests:
-
+### Run All Tests
 ```bash
-uv run pytest -v --timeout=10
+./run_all_tests.sh
 ```
 
-To run the optional real LLM test (requires a valid `LLM_API_KEY` in `.env`):
-
+### Test Categories
 ```bash
-uv run pytest -m real_llm -v --timeout=10
+# Backend tests
+python -m pytest tests/backend/ -v
+
+# API tests
+python -m pytest tests/api/ -v
+
+# Frontend tests
+python -m pytest tests/frontend/ -v
+
+# Integration tests
+python -m pytest tests/integration/ -v
+
+# Simple browser test
+python test_browser_simple.py
 ```
 
-#### Frontend/Browser Tests with Playwright
-
-For comprehensive frontend testing including JavaScript error detection and Alpine.js integration:
-
+### Fast Test Suite
 ```bash
-# Install Playwright browsers and system dependencies
-playwright install chromium
-playwright install-deps  # Install system dependencies (Linux)
-
-# Run frontend browser tests
-uv run pytest tests/test_frontend_playwright.py -v --timeout=10
+./run_tests_fast.sh
 ```
 
-**Note**: Playwright tests require Chromium browser and system dependencies. If you encounter import errors, ensure you've run the installation commands above.
+## Development
 
-### 6. Running the Application
+### Frontend Development
+The frontend uses Alpine.js for reactivity and Tailwind CSS for styling. Key files:
 
-To start the FastAPI application:
+- `frontend/src/main.js` - Main application logic
+- `frontend/index.html` - HTML template with Alpine.js directives
+- `frontend/src/styles/main.css` - Custom styles and Tailwind imports
 
+### Backend Development
+The backend uses FastAPI with the following patterns:
+
+- **Routers**: Organize endpoints by functionality
+- **Services**: Business logic separated from route handlers
+- **Models**: Database models and Pydantic schemas
+- **Middleware**: Authentication, CORS, and request logging
+
+### Adding New Tools
+1. Create tool class in `tools/`
+2. Register in `app/services/tool_manager.py`
+3. Add to `AVAILABLE_TOOLS` in `app/routers/tools.py`
+
+### Adding New Data Sources
+1. Implement data source handler
+2. Add to `AVAILABLE_DATA_SOURCES` in `app/routers/tools.py`
+3. Update frontend to handle new data source
+
+## Deployment
+
+### Docker Deployment
 ```bash
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# Build and deploy
+docker-compose -f docker-compose.prod.yml up -d
+
+# Scale services
+docker-compose -f docker-compose.prod.yml up -d --scale web=3
 ```
 
-The application will be accessible at `http://localhost:8000`.
+### Manual Deployment
+1. Build frontend: `cd frontend && npm run build`
+2. Install Python dependencies: `uv pip install -r requirements.txt`
+3. Set environment variables
+4. Run: `uv run uvicorn app.main:app --host 0.0.0.0 --port 8000`
 
-## Docker Usage
+## Monitoring
 
-### Build the Docker image
+### Logging
+- Application logs: Structured JSON logging
+- Session logs: Stored in `logs/` directory
+- Test logs: Stored in `test_results/` directory
 
+### Health Checks
+- `GET /health` - Basic health check
+- WebSocket connection monitoring
+- Database connectivity checks
+
+## Troubleshooting
+
+### Common Issues
+
+**Frontend not loading models**
+- Check `/llms` endpoint is accessible
+- Verify LLM configuration in `config/llms.yml`
+- Check browser console for JavaScript errors
+
+**Streaming responses not working**
+- Verify WebSocket connection in browser dev tools
+- Check for CORS issues
+- Ensure proper content-type headers
+
+**Tests failing**
+- Run individual test suites to isolate issues
+- Check test logs in `test_results/`
+- Verify test database is properly initialized
+
+### Debug Mode
+Enable detailed logging:
 ```bash
-docker build -t chat-data-mcp-tools-ui .
+export DEBUG=true
+export LOG_LEVEL=DEBUG
 ```
 
-### Run with Docker Compose
+## Contributing
 
-```bash
-docker-compose up --build
-```
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/new-feature`
+3. Make changes and add tests
+4. Run test suite: `./run_all_tests.sh`
+5. Commit changes: `git commit -m "Add new feature"`
+6. Push to branch: `git push origin feature/new-feature`
+7. Create pull request
 
-## CI/CD
+### Code Style
+- Python: Follow PEP 8, use type hints
+- JavaScript: Use modern ES6+ features
+- CSS: Use Tailwind utility classes
+- Tests: Descriptive test names and comprehensive coverage
 
-This project includes a GitHub Actions workflow (`.github/workflows/ci-cd.yml`) for automated testing and Docker image building/pushing to GitHub Container Registry on `main` branch pushes and pull requests.
+## License
 
-## Project Structure
+[Add your license information here]
 
-```
-/
-├── .github/
-├── .devcontainer/
-├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── middleware/
-│   ├── routers/
-│   ├── services/
-│   └── utils/
-├── tools/
-├── access_control/
-├── frontend/                  # NPM-based frontend (Alpine.js + Vite)
-├── data/
-├── docker/
-├── Dockerfile
-├── docker-compose.yml
-├── .dockerignore
-├── pytest.ini
-├── .env
-├── .env.example
-├── requirements.txt
-├── requirements-dev.txt
-└── README.md
-```
+## Support
 
-## Future Enhancements
-
--   Database-backed data sources
--   Advanced access control system
--   Persistent session storage
--   Enhanced tool security (sandboxing)
--   Analytics and monitoring
--   Multi-model support
--   Plugin system for tools
+For issues and questions:
+- Create an issue in the GitHub repository
+- Check existing documentation and troubleshooting guides
+- Review test logs for detailed error information

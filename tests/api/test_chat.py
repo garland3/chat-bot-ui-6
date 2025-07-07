@@ -18,12 +18,21 @@ def test_chat_message_llm_disabled():
     assert chat_response.json() == {"response": "LLM calls are disabled."}
     settings.disable_llm_calls = False
 
-@patch('app.routers.chat.llm_client')
-def test_get_llms_endpoint(mock_llm_client):
-    mock_llm_client.get_available_llms.return_value = ["LLM A", "LLM B", "LLM C"]
+def test_get_llms_endpoint():
+    # Test the actual /llms endpoint which now returns LLM objects from YAML config
     response = client.get("/llms")
     assert response.status_code == 200
-    assert response.json() == ["LLM A", "LLM B", "LLM C"]
+    
+    llms = response.json()
+    assert isinstance(llms, list)
+    assert len(llms) > 0
+    
+    # Verify structure of first LLM
+    first_llm = llms[0]
+    assert "name" in first_llm
+    assert "provider" in first_llm
+    assert "model" in first_llm
+    assert "description" in first_llm
 
 @patch('app.routers.chat.llm_client')
 def test_download_chat_session(mock_llm_client):

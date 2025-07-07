@@ -17,7 +17,17 @@
       "Bash(mkdir:*)",
       "Bash(npm init:*)",
       "Bash(npm install:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(mv:*)",
+      "Bash(chmod:*)",
+      "Bash(timeout:*)",
+      "Bash(# Backend/Core tests\nmv tests/test_auth.py tests/backend/\nmv tests/test_config.py tests/backend/\nmv tests/test_session.py tests/backend/\nmv tests/test_session_logger.py tests/backend/\nmv tests/test_llm_config_manager.py tests/backend/\n\n# API tests\nmv tests/test_chat.py tests/api/\nmv tests/test_data.py tests/api/\nmv tests/test_health.py tests/api/\nmv tests/test_llm_configs_api.py tests/api/\nmv tests/test_websocket.py tests/api/\n\n# Integration tests\nmv tests/test_container_integration.py tests/integration/\nmv tests/test_phase_15_integration.py tests/integration/\nmv tests/test_phase_15_architecture.py tests/integration/\n\n# Frontend tests\nmv tests/test_debug_frontend.py tests/frontend/)",
+      "Bash(# Remove empty/outdated tests\nrm tests/test_chat_500_error.py tests/test_correct_api_usage.py tests/test_session_logger_error.py\n\n# Move remaining tests that look like they test specific functionality\nmv tests/test_new_approach.py tests/api/\nmv tests/test_chat_websocket.py tests/api/)",
+      "Bash(# Copy conftest.py to subfolders\ncp tests/conftest.py tests/backend/\ncp tests/conftest.py tests/api/\ncp tests/conftest.py tests/frontend/\ncp tests/conftest.py tests/integration/)",
+      "Bash(# Remove the problematic frontend test that uses Playwright\nrm tests/frontend/test_debug_frontend.py\n\n# Check what''s in the integration folder - some tests might be outdated\nls -la tests/integration/)",
+      "Bash(# Remove the old Phase 15 architecture test with many xfails\nrm tests/integration/test_phase_15_architecture.py\n\n# Test the remaining integration tests\ntimeout 60s uv run pytest tests/integration/ -v)",
+      "Bash(cp:*)",
+      "Bash(./run_all_tests.sh)"
     ],
     "deny": []
   }

@@ -13,9 +13,9 @@ class LLMClient:
     def _set_current_llm_config(self):
         config = self.llm_config_manager.get_llm_config(self.current_llm_name)
         self.provider = config.provider.lower()
-        self.base_url = config.base_url
+        self.base_url = config.base_url or "https://api.anthropic.com/v1"  # fallback
         self.api_key = config.api_key
-        self.model_name = config.model_name
+        self.model_name = config.model
 
     def set_llm(self, llm_name: str):
         if llm_name not in self.llm_config_manager.get_all_llm_names():

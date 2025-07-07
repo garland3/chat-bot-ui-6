@@ -7,6 +7,7 @@ from app.services.llm_config_manager import LLMConfigManager, LLMConfig
 def mock_env_vars(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "mock_openai_key")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "mock_anthropic_key")
+    monkeypatch.setenv("OLLAMA_API_KEY", "mock_ollama_key")
 
 @pytest.fixture
 def mock_llm_config_file(tmp_path):
@@ -15,20 +16,23 @@ llms:
   - name: "Test OpenAI GPT-3.5"
     provider: "openai"
     base_url: "https://api.testopenai.com/v1"
-    api_key: "${OPENAI_API_KEY}"
-    model_name: "gpt-3.5-turbo-test"
+    api_key_env: "OPENAI_API_KEY"
+    model: "gpt-3.5-turbo-test"
+    description: "Test OpenAI model"
     
   - name: "Test Anthropic Claude"
     provider: "anthropic"
     base_url: "https://api.testanthropic.com"
-    api_key: "${ANTHROPIC_API_KEY}"
-    model_name: "claude-test"
+    api_key_env: "ANTHROPIC_API_KEY"
+    model: "claude-test"
+    description: "Test Anthropic model"
     
   - name: "Local Test Ollama"
     provider: "ollama"
     base_url: "http://localhost:11434/v1"
-    api_key: "not-required"
-    model_name: "llama2-test"
+    api_key_env: "OLLAMA_API_KEY"
+    model: "llama2-test"
+    description: "Test Ollama model"
 """
     config_file = tmp_path / "test_llms.yml"
     config_file.write_text(config_content)
@@ -49,7 +53,7 @@ def test_llm_config_manager_resolves_env_vars(mock_llm_config_file):
 
     assert openai_config.api_key == "mock_openai_key"
     assert anthropic_config.api_key == "mock_anthropic_key"
-    assert ollama_config.api_key == "not-required"
+    assert ollama_config.api_key == "mock_ollama_key"
 
 def test_llm_config_manager_get_llm_config(mock_llm_config_file):
     manager = LLMConfigManager(mock_llm_config_file)
@@ -58,7 +62,7 @@ def test_llm_config_manager_get_llm_config(mock_llm_config_file):
     assert config.name == "Test OpenAI GPT-3.5"
     assert config.provider == "openai"
     assert config.base_url == "https://api.testopenai.com/v1"
-    assert config.model_name == "gpt-3.5-turbo-test"
+    assert config.model == "gpt-3.5-turbo-test"
 
 def test_llm_config_manager_get_all_llm_names(mock_llm_config_file):
     manager = LLMConfigManager(mock_llm_config_file)
@@ -66,14 +70,16 @@ def test_llm_config_manager_get_all_llm_names(mock_llm_config_file):
     assert sorted(names) == sorted(["Test OpenAI GPT-3.5", "Test Anthropic Claude", "Local Test Ollama"])
 
 def test_llm_config_manager_file_not_found():
-    with pytest.raises(FileNotFoundError):
-        LLMConfigManager("non_existent_file.yml")
+    # Manager should handle missing files gracefully, not raise exceptions
+    manager = LLMConfigManager("non_existent_file.yml")
+    assert len(manager.llm_configs) == 0
 
 def test_llm_config_manager_invalid_format(tmp_path):
     invalid_config_file = tmp_path / "invalid_llms.yml"
     invalid_config_file.write_text("not_llms: []")
-    with pytest.raises(ValueError, match="Invalid LLM configuration format"):
-        LLMConfigManager(str(invalid_config_file))
+    # Manager should handle invalid format gracefully, not raise exceptions
+    manager = LLMConfigManager(str(invalid_config_file))
+    assert len(manager.llm_configs) == 0
 
 def test_llm_config_manager_llm_not_found(mock_llm_config_file):
     manager = LLMConfigManager(mock_llm_config_file)

@@ -1,6 +1,6 @@
 
 import sqlite3
-from tools.base_tool import BaseTool
+from app.common.base_tool import BaseTool
 from typing import Dict, Any
 
 class SQLQueryTool(BaseTool):

@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import yaml
 import os
 from pydantic import BaseModel, Field
@@ -6,15 +6,17 @@ from pydantic import BaseModel, Field
 class LLMConfig(BaseModel):
     name: str
     provider: str
-    base_url: str
-    api_key: str
-    model_name: str
+    model: str
+    api_key_env: str
+    base_url: Optional[str] = None
+    description: Optional[str] = None
+    api_key: Optional[str] = None  # Resolved at runtime
 
 class LLMConfigPublic(BaseModel):
     name: str
     provider: str
-    base_url: str
-    model_name: str
+    model: str
+    description: Optional[str] = None
 
 class LLMConfigManager:
     def __init__(self, config_file: str):
@@ -23,32 +25,67 @@ class LLMConfigManager:
         self._load_configs()
 
     def _load_configs(self):
+        """Load LLM configurations from YAML file."""
         if not os.path.exists(self.config_file):
-            raise FileNotFoundError(f"LLM configuration file not found: {self.config_file}")
+            print(f"Warning: LLM configuration file not found: {self.config_file}")
+            return
 
-        with open(self.config_file, 'r') as f:
-            data = yaml.safe_load(f)
+        try:
+            with open(self.config_file, 'r') as f:
+                data = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            print(f"Error parsing YAML file {self.config_file}: {e}")
+            return
         
-        if 'llms' not in data or not isinstance(data['llms'], list):
-            raise ValueError("Invalid LLM configuration format: 'llms' key missing or not a list")
+        if not data or 'llms' not in data or not isinstance(data['llms'], list):
+            print(f"Invalid LLM configuration format in {self.config_file}: 'llms' key missing or not a list")
+            return
 
         for config_data in data['llms']:
-            # Resolve environment variables in api_key and base_url
-            for key in ["api_key", "base_url"]:
-                if isinstance(config_data.get(key), str) and config_data[key].startswith("${") and config_data[key].endswith("}"):
-                    env_var = config_data[key][2:-1]
-                    config_data[key] = os.getenv(env_var, "")
+            try:
+                # Validate required fields
+                required_fields = ['name', 'provider', 'model', 'api_key_env']
+                if not all(field in config_data for field in required_fields):
+                    print(f"Skipping invalid LLM config missing required fields: {config_data}")
+                    continue
 
-            llm_config = LLMConfig(**config_data)
-            self.llm_configs[llm_config.name] = llm_config
+                # Resolve API key from environment variable
+                api_key_env = config_data['api_key_env']
+                api_key = os.getenv(api_key_env)
+                if not api_key:
+                    print(f"Warning: API key environment variable '{api_key_env}' not set for {config_data['name']}")
+                
+                config_data['api_key'] = api_key
+                llm_config = LLMConfig(**config_data)
+                self.llm_configs[llm_config.name] = llm_config
+                
+            except Exception as e:
+                print(f"Error loading LLM config {config_data}: {e}")
+                continue
 
     def get_llm_config(self, name: str) -> LLMConfig:
+        """Get LLM configuration by name."""
         if name not in self.llm_configs:
             raise ValueError(f"LLM configuration '{name}' not found.")
         return self.llm_configs[name]
 
     def get_all_llm_names(self) -> List[str]:
+        """Get list of all LLM names."""
         return list(self.llm_configs.keys())
 
-    def get_all_llm_configs(self) -> List[LLMConfigPublic]:
-        return [LLMConfigPublic(**config.model_dump(exclude={'api_key'})) for config in self.llm_configs.values()]
+    def get_available_llms(self) -> List[LLMConfigPublic]:
+        """Get all available LLM configurations (without sensitive data)."""
+        return [
+            LLMConfigPublic(
+                name=config.name,
+                provider=config.provider, 
+                model=config.model,
+                description=config.description
+            ) 
+            for config in self.llm_configs.values()
+        ]
+
+    def reload_configs(self):
+        """Reload configurations from file."""
+        self.llm_configs.clear()
+        self._load_configs()

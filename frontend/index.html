@@ -6,87 +6,164 @@
     <title>Galaxy Chat</title>
     <link rel="stylesheet" href="/src/styles/main.css">
 </head>
-<body class="bg-gray-900 text-white">
-    <div id="app" x-data="chatApp()" class="min-h-screen flex flex-col">
-        <!-- Header -->
-        <header class="bg-gray-800 p-4 shadow-lg">
-            <h1 class="text-2xl font-bold text-center">Galaxy Chat</h1>
-        </header>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white h-screen overflow-hidden">
+    <div id="app" x-data="chatApp()" class="h-screen flex">
+        <!-- Sidebar -->
+        <div class="w-80 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h1 class="text-xl font-semibold" x-text="appName">Galaxy Chat</h1>
+                <button class="mt-3 w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                    + New chat
+                </button>
+            </div>
 
-        <!-- Main Chat Container -->
-        <main class="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4">
-            <!-- Configuration Panel -->
-            <div class="mb-4 p-4 bg-gray-800 rounded-lg">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Model Selection -->
-                    <div>
-                        <label class="block text-sm font-medium mb-1">LLM Model:</label>
-                        <select x-model="selectedModel" class="w-full p-2 bg-gray-700 border border-gray-600 rounded">
-                            <option value="">Select Model...</option>
-                            <template x-for="model in availableModels" :key="model.name">
-                                <option :value="model.name" x-text="model.name"></option>
-                            </template>
-                        </select>
-                    </div>
+            <!-- Model Selection -->
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Model</label>
+                <div x-show="loadingModels" class="text-sm text-gray-500 dark:text-gray-400">Loading models...</div>
+                <select x-model="selectedModel" 
+                        class="w-full p-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Choose a model...</option>
+                    <template x-for="model in availableModels" :key="model.name">
+                        <option :value="model.name" x-text="model.display_name || model.name"></option>
+                    </template>
+                </select>
+            </div>
 
-                    <!-- Tools Selection -->
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Tools:</label>
-                        <select x-model="selectedTools" multiple class="w-full p-2 bg-gray-700 border border-gray-600 rounded h-20">
-                            <option value="calculator">Calculator</option>
-                            <option value="code_execution">Code Execution</option>
-                            <option value="user_lookup">User Lookup</option>
-                        </select>
-                    </div>
-
-                    <!-- Data Sources Selection -->
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Data Sources:</label>
-                        <select x-model="selectedDataSources" multiple class="w-full p-2 bg-gray-700 border border-gray-600 rounded h-20">
-                            <option value="employees">Employee Data</option>
-                            <option value="products">Product Catalog</option>
-                            <option value="orders">Order History</option>
-                        </select>
-                    </div>
+            <!-- Tools Section -->
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Tools</label>
+                <div x-show="loadingTools" class="text-sm text-gray-500 dark:text-gray-400">Loading tools...</div>
+                <div class="space-y-2 max-h-40 overflow-y-auto">
+                    <template x-for="tool in availableTools" :key="tool.id">
+                        <label class="flex items-start space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-colors">
+                            <input type="checkbox" 
+                                   :value="tool.id" 
+                                   x-model="selectedTools"
+                                   class="mt-0.5 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white" x-text="tool.name"></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400" x-text="tool.description"></div>
+                            </div>
+                        </label>
+                    </template>
                 </div>
             </div>
 
+            <!-- Data Sources Section -->
+            <div class="p-4 flex-1 overflow-hidden">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Data Sources</label>
+                <div x-show="loadingDataSources" class="text-sm text-gray-500 dark:text-gray-400">Loading data sources...</div>
+                <div class="space-y-2 max-h-40 overflow-y-auto">
+                    <template x-for="dataSource in availableDataSources" :key="dataSource.id">
+                        <label class="flex items-start space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-colors">
+                            <input type="checkbox" 
+                                   :value="dataSource.id" 
+                                   x-model="selectedDataSources"
+                                   class="mt-0.5 w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white" x-text="dataSource.name"></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400" x-text="dataSource.description"></div>
+                            </div>
+                        </label>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="flex-1 flex flex-col">
             <!-- Chat Messages -->
-            <div class="flex-1 bg-gray-800 rounded-lg p-4 mb-4 overflow-y-auto max-h-96" id="messages">
-                <template x-for="message in messages" :key="message.id">
-                    <div class="mb-4">
-                        <div :class="message.role === 'user' ? 'text-blue-300' : 'text-green-300'" 
-                             class="font-semibold mb-1" x-text="message.role === 'user' ? 'You:' : 'Assistant:'"></div>
-                        <div class="text-gray-200 whitespace-pre-wrap" x-html="message.content"></div>
+            <div class="flex-1 overflow-y-auto" id="messages">
+                <div class="max-w-4xl mx-auto px-4 py-6">
+                    <template x-for="message in messages" :key="message.id">
+                        <div class="mb-8">
+                            <!-- User Message -->
+                            <div x-show="message.role === 'user'" class="flex items-start space-x-4 justify-end">
+                                <div class="bg-blue-600 text-white rounded-2xl px-4 py-3 max-w-2xl">
+                                    <div class="whitespace-pre-wrap" x-text="message.content"></div>
+                                </div>
+                                <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                    U
+                                </div>
+                            </div>
+                            
+                            <!-- Assistant Message -->
+                            <div x-show="message.role === 'assistant'" class="flex items-start space-x-4">
+                                <div class="w-8 h-8 bg-gray-600 dark:bg-gray-300 rounded-full flex items-center justify-center text-white dark:text-gray-900 text-sm font-medium">
+                                    AI
+                                </div>
+                                <div class="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3 max-w-2xl">
+                                    <div class="whitespace-pre-wrap" x-text="message.content"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- System Message -->
+                            <div x-show="message.role === 'system'" class="flex justify-center">
+                                <div class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-lg px-3 py-2 text-sm">
+                                    <div x-text="message.content"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Streaming indicator -->
+                    <div x-show="isStreaming" class="flex items-start space-x-4 mb-8">
+                        <div class="w-8 h-8 bg-gray-600 dark:bg-gray-300 rounded-full flex items-center justify-center text-white dark:text-gray-900 text-sm font-medium">
+                            AI
+                        </div>
+                        <div class="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3">
+                            <div class="flex space-x-1">
+                                <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                                <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                                <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                            </div>
+                        </div>
                     </div>
-                </template>
-                
-                <!-- Streaming indicator -->
-                <div x-show="isStreaming" class="text-yellow-400 italic">
-                    Assistant is typing...
+                    
+                    <!-- Empty state -->
+                    <div x-show="messages.length === 0 && !isStreaming" class="text-center py-12">
+                        <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
+                                <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Start a conversation</h3>
+                        <p class="text-gray-500 dark:text-gray-400">Choose your model and tools, then send a message to begin.</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Input Area -->
-            <div class="bg-gray-800 rounded-lg p-4">
-                <div class="flex gap-2">
-                    <textarea 
-                        x-model="currentMessage" 
-                        @keydown.ctrl.enter="sendMessage()"
-                        placeholder="Type your message... (Ctrl+Enter to send)"
-                        class="flex-1 p-3 bg-gray-700 border border-gray-600 rounded-lg resize-none min-h-[80px]"
-                        :disabled="isStreaming"
-                    ></textarea>
-                    <button 
-                        @click="sendMessage()"
-                        :disabled="isStreaming || !currentMessage.trim()"
-                        class="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
-                    >
-                        Send
-                    </button>
+            <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                <div class="max-w-4xl mx-auto px-4 py-4">
+                    <div class="relative">
+                        <textarea 
+                            x-model="currentMessage" 
+                            @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); sendMessage(); }"
+                            @keydown.ctrl.enter="sendMessage()"
+                            @keydown.meta.enter="sendMessage()"
+                            placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
+                            class="w-full p-4 pr-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                            rows="1"
+                            :disabled="isStreaming"
+                            style="min-height: 24px; max-height: 200px;"
+                        ></textarea>
+                        <button 
+                            @click="sendMessage()"
+                            :disabled="isStreaming || !currentMessage.trim()"
+                            class="absolute right-2 bottom-2 p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
+                        >
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
     <script type="module" src="/src/main.js"></script>

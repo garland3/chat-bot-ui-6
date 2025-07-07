@@ -7,4 +7,10 @@ router = APIRouter()
 
 @router.get("/api/llm_configs", response_model=List[LLMConfigPublic])
 async def get_llm_configs():
-    return llm_client.llm_config_manager.get_all_llm_configs()
+    """Get LLM configurations (legacy endpoint)."""
+    return llm_client.llm_config_manager.get_available_llms()
+
+@router.get("/llms", response_model=List[LLMConfigPublic])
+async def get_llms():
+    """Get available LLM models from configuration."""
+    return llm_client.llm_config_manager.get_available_llms()

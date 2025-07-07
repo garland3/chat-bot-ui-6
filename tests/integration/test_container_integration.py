@@ -56,11 +56,13 @@ def test_llm_selection_container(mock_chat_completion_fixture):
     # Get available LLMs
     llm_response = client.get("/llms")
     assert llm_response.status_code == 200
-    llm_names = llm_response.json()
-    assert len(llm_names) > 0
+    llm_configs = llm_response.json()
+    assert len(llm_configs) > 0
+    assert isinstance(llm_configs[0], dict)
+    assert "name" in llm_configs[0]
 
     # Select an LLM and send a message
-    selected_llm = llm_names[0] # Select the first available LLM
+    selected_llm = llm_configs[0]["name"] # Select the first available LLM name
     message_payload = {"content": "Hello with specific LLM!", "llm_name": selected_llm}
     chat_response = client.post(f"/chat/{session_id}/message", json=message_payload, headers={"X-EMAIL-USER": "container_llm_test@example.com"})
     assert chat_response.status_code == 200

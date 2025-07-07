@@ -6,7 +6,7 @@ from starlette.responses import HTMLResponse
 from starlette.routing import Mount
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.middleware.auth import AuthMiddleware
-from app.routers import chat, websocket, data, llm_configs, theme
+from app.routers import chat, websocket, data, llm_configs, theme, tools, config
 from app.services.llm_client import llm_client
 from app.config import settings
 import os
@@ -83,6 +83,8 @@ app.include_router(websocket.router)
 app.include_router(data.router, prefix="/api/data")
 app.include_router(llm_configs.router)
 app.include_router(theme.router)
+app.include_router(tools.router)
+app.include_router(config.router)
 
 # Mount frontend static files from built assets
 app.mount("/static", StaticFiles(directory="frontend/dist"), name="static")
@@ -101,12 +103,24 @@ async def serve_frontend():
     try:
         with open("frontend/dist/index.html", "r", encoding="utf-8") as f:
             html_content = f.read()
+            
+        # Replace title and app name with dynamic values from config
+        html_content = html_content.replace(
+            "<title>Galaxy Chat</title>", 
+            f"<title>{settings.app_name}</title>"
+        )
+        # Replace any hardcoded app names in the content
+        html_content = html_content.replace(
+            "Galaxy Chat",
+            settings.app_name
+        )
+            
     except FileNotFoundError:
         # Fallback during development if frontend hasn't been built yet
-        html_content = """
+        html_content = f"""
         <!DOCTYPE html>
         <html>
-        <head><title>Galaxy Chat</title></head>
+        <head><title>{settings.app_name}</title></head>
         <body>
             <h1>Frontend Not Built</h1>
             <p>Please run: <code>cd frontend && npm run build</code></p>
