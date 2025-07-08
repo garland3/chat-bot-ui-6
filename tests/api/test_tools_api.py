@@ -32,7 +32,6 @@ def test_get_available_tools():
     assert "basicmath" in tool_ids or "BasicMathTool" in tool_names
     assert "codeexecution" in tool_ids or "CodeExecutionTool" in tool_names
     assert "userlookup" in tool_ids or "UserLookupTool" in tool_names
-    assert "sqlquery" in tool_ids or "SQLQueryTool" in tool_names
 
 def test_get_available_data_sources():
     """Test the /api/data-sources endpoint returns available data sources."""

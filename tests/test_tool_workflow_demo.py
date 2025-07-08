@@ -25,7 +25,7 @@ def test_real_world_tool_management_workflow():
     assert "UserLookupTool" in initial_names, f"UserLookupTool should be available now that it's back in tools folder"
     assert "BasicMathTool" in initial_names
     assert "CodeExecutionTool" in initial_names  
-    assert "SQLQueryTool" in initial_names
+    # SQLQueryTool was removed as it's no longer needed with DataSourceManager
     
     # Test removing a tool (move to temp folder)
     user_tool_path = "/app/tools/user_lookup_tool.py"

@@ -6,7 +6,7 @@ from starlette.responses import HTMLResponse
 from starlette.routing import Mount
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.middleware.auth import AuthMiddleware
-from app.routers import chat, websocket, data, llm_configs, theme, tools, config
+from app.routers import chat, websocket, llm_configs, theme, tools, config
 from app.services.llm_client import llm_client
 from app.config import settings
 import os
@@ -80,7 +80,6 @@ app.add_middleware(CSPMiddleware)
 app.add_middleware(AuthMiddleware)
 app.include_router(chat.router)
 app.include_router(websocket.router)
-app.include_router(data.router, prefix="/api/data")
 app.include_router(llm_configs.router)
 app.include_router(theme.router)
 app.include_router(tools.router)

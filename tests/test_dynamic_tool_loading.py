@@ -21,7 +21,7 @@ def test_tools_folder_auto_discovery():
     tool_names = [tool["function"]["name"] for tool in tools]
     
     # Should find existing tools (including user_lookup_tool which is back in tools folder)
-    expected_tools = ["BasicMathTool", "CodeExecutionTool", "SQLQueryTool", "UserLookupTool"]
+    expected_tools = ["BasicMathTool", "CodeExecutionTool", "UserLookupTool"]
     for expected_tool in expected_tools:
         assert expected_tool in tool_names, f"Expected tool '{expected_tool}' not found in {tool_names}"
 
@@ -144,7 +144,7 @@ def test_tools_api_endpoint_reflects_dynamic_changes():
     tool_names = [tool["name"] for tool in data["tools"]]
     
     # Should reflect current tools folder contents
-    expected_tools = ["BasicMathTool", "CodeExecutionTool", "SQLQueryTool", "UserLookupTool"]
+    expected_tools = ["BasicMathTool", "CodeExecutionTool", "UserLookupTool"]
     for expected_tool in expected_tools:
         assert expected_tool in tool_names
 

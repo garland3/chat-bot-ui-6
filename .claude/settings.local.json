@@ -32,7 +32,8 @@
       "Bash(gh run view:*)",
       "Bash(gh workflow:*)",
       "Bash(git push:*)",
-      "Bash(gh run:*)"
+      "Bash(gh run:*)",
+      "Bash(git tag:*)"
     ],
     "deny": []
   }
