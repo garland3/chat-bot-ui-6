@@ -8,7 +8,13 @@ sys.path.insert(0, '/app')
 
 def test_real_world_tool_management_workflow():
     """Test the real-world workflow of adding/removing tools from the tools folder."""
+    import pytest
+    import os
     from app.services.tool_manager import ToolManager
+    
+    # Skip this test in CI environments where we can't write to /app
+    if not os.access("/app", os.W_OK):
+        pytest.skip("Skipping dynamic tool test in read-only environment (CI)")
     
     # Initial state - should have 4 tools including UserLookupTool
     tool_manager = ToolManager()

@@ -45,9 +45,18 @@ class TestConfigAPI:
         assert response.status_code == 200
         
         data = response.json()
-        # The app name should be the one from .env file: "My Cool Chat App v2"
-        expected_name = "My Cool Chat App v2"
-        assert data["app_name"] == expected_name, f"Expected {expected_name}, got {data['app_name']}"
+        # Check if we have a .env file (local dev) or not (CI)
+        import os
+        env_file_exists = os.path.exists("/app/.env")
+        
+        if env_file_exists:
+            # Local development: should read from .env file
+            expected_name = "My Cool Chat App v2"
+            assert data["app_name"] == expected_name, f"Expected {expected_name}, got {data['app_name']}"
+        else:
+            # CI environment: should use default value
+            expected_name = "Galaxy Chat"
+            assert data["app_name"] == expected_name, f"Expected {expected_name}, got {data['app_name']}"
     
     def test_llms_endpoint_uses_yaml_config(self):
         """Test that /llms endpoint loads models from YAML configuration."""

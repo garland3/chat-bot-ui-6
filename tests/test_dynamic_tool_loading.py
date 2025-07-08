@@ -28,6 +28,11 @@ def test_tools_folder_auto_discovery():
 def test_adding_tool_to_folder_makes_it_available():
     """Test that adding a tool to the tools folder makes it available."""
     from app.services.tool_manager import ToolManager
+    import pytest
+    
+    # Skip this test in CI environments where we can't write to /app
+    if not os.access("/app", os.W_OK):
+        pytest.skip("Skipping dynamic tool test in read-only environment (CI)")
     
     # Create a test tool file in the tools folder
     test_tool_content = '''
@@ -90,7 +95,12 @@ class TestDynamicTool(BaseTool):
 def test_removing_tool_from_folder_makes_it_unavailable():
     """Test that tools automatically removed from folder are not available."""
     from app.services.tool_manager import ToolManager
+    import pytest
     import shutil
+    
+    # Skip this test in CI environments where we can't write to /app
+    if not os.access("/app", os.W_OK):
+        pytest.skip("Skipping dynamic tool test in read-only environment (CI)")
     
     # First, move UserLookupTool out temporarily
     user_tool_path = "/app/tools/user_lookup_tool.py"
