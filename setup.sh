@@ -5,7 +5,7 @@ uv pip install -r requirements.txt
 uv pip install -r requirements-dev.txt
 sudo apt update
 sudo apt install -y procps 
-playwright install    
- playwright install-deps  
+# playwright install    
+#  playwright install-deps  
 npm install -g @google/gemini-cli
 npm install -g @anthropic-ai/claude-code

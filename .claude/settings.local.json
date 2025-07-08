@@ -27,7 +27,8 @@
       "Bash(# Remove the problematic frontend test that uses Playwright\nrm tests/frontend/test_debug_frontend.py\n\n# Check what''s in the integration folder - some tests might be outdated\nls -la tests/integration/)",
       "Bash(# Remove the old Phase 15 architecture test with many xfails\nrm tests/integration/test_phase_15_architecture.py\n\n# Test the remaining integration tests\ntimeout 60s uv run pytest tests/integration/ -v)",
       "Bash(cp:*)",
-      "Bash(./run_all_tests.sh)"
+      "Bash(./run_all_tests.sh)",
+      "Bash(ss:*)"
     ],
     "deny": []
   }

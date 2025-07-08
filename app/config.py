@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 # Load environment variables from .env file explicitly
-load_dotenv("/app/.env")
+load_dotenv("/app/.env", override=True)
 
 class Settings(BaseSettings):
     # Application Configuration

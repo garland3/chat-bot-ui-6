@@ -63,9 +63,9 @@ frontend/
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+
-- uv (Python package manager)
+- uv (Python package manager) - [Install from here](https://docs.astral.sh/uv/getting-started/installation/)
 
-### Installation
+### Quick Setup
 
 1. **Clone the repository**
    ```bash
@@ -81,30 +81,49 @@ frontend/
    uv pip install -r requirements-dev.txt
    ```
 
-3. **Install frontend dependencies**
+3. **Configure environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys:
+   # ANTHROPIC_API_KEY=your_anthropic_key_here
+   # OPENAI_API_KEY=your_openai_key_here
+   ```
+
+4. **Install and build frontend**
    ```bash
    cd frontend
    npm install
-   npm run build
+   npm run build  # Important: Build is required for UI changes to appear
    cd ..
-   ```
-
-4. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
    ```
 
 ### Running the Application
 
-#### Development Mode
+#### Development Mode (Recommended)
 ```bash
-# Start backend server
+# Terminal 1: Start backend server
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# In another terminal, start frontend dev server
+# Terminal 2: Start frontend dev server (for live reloading)
 cd frontend
 npm run dev
+```
+
+**Important Notes:**
+- The backend serves the built frontend from `/dist` folder at `http://localhost:8000`
+- The frontend dev server runs at `http://localhost:3000` (or `http://localhost:3001` if 3000 is in use)
+- For UI changes to appear, you must run `npm run build` in the frontend directory
+- The frontend uses Vite for building and live reloading
+- **For Docker/WSL users**: The dev server binds to `0.0.0.0` for port forwarding compatibility
+
+#### Quick Development Workflow
+When making frontend changes:
+```bash
+# Make your changes to frontend files
+cd frontend
+npm run build  # Build the changes
+cd ..
+# Refresh browser - changes should now be visible
 ```
 
 #### Production Mode
@@ -262,6 +281,18 @@ docker-compose -f docker-compose.prod.yml up -d --scale web=3
 ## Troubleshooting
 
 ### Common Issues
+
+**Frontend changes not appearing**
+- Run `npm run build` in the frontend directory
+- The app serves from `/dist` folder, not source files
+- Clear browser cache or try private browsing
+- Check if `npm run dev` is running for live reload
+
+**API Key errors (401 Unauthorized)**
+- Verify API keys are set in `.env` file
+- Check that `.env` file is in the root directory (`/app/.env`)
+- Ensure `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` are correctly set
+- Restart the backend server after changing `.env`
 
 **Frontend not loading models**
 - Check `/llms` endpoint is accessible

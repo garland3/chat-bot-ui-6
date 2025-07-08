@@ -139,25 +139,28 @@
             <!-- Input Area -->
             <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                 <div class="max-w-4xl mx-auto px-4 py-4">
-                    <div class="relative">
-                        <textarea 
-                            x-model="currentMessage" 
-                            @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); sendMessage(); }"
-                            @keydown.ctrl.enter="sendMessage()"
-                            @keydown.meta.enter="sendMessage()"
-                            placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
-                            class="w-full p-4 pr-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                            rows="1"
-                            :disabled="isStreaming"
-                            style="min-height: 24px; max-height: 200px;"
-                        ></textarea>
+                    <div class="flex items-end gap-4">
+                        <div class="flex-1">
+                            <textarea 
+                                x-model="currentMessage" 
+                                @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); sendMessage(); }"
+                                @keydown.ctrl.enter="sendMessage()"
+                                @keydown.meta.enter="sendMessage()"
+                                placeholder="Type your message... (Enter to send, Shift+Enter for new line)"
+                                class="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                                rows="1"
+                                :disabled="isStreaming"
+                                style="min-height: 24px; max-height: 200px;"
+                            ></textarea>
+                        </div>
                         <button 
                             @click="sendMessage()"
                             :disabled="isStreaming || !currentMessage.trim()"
-                            class="absolute right-2 bottom-2 p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
+                            class="p-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-xl text-white transition-colors"
+                            title="Send message"
                         >
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                             </svg>
                         </button>
                     </div>
