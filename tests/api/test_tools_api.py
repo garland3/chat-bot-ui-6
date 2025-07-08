@@ -51,11 +51,10 @@ def test_get_available_data_sources():
     assert "description" in data_source
     assert "category" in data_source
     
-    # Check for expected data sources
+    # Check for expected data sources (updated to new test sources)
     data_source_ids = [ds["id"] for ds in data["data_sources"]]
-    assert "employees" in data_source_ids
-    assert "products" in data_source_ids
-    assert "orders" in data_source_ids
+    assert "data-test" in data_source_ids
+    assert "new-mexico-history" in data_source_ids
 
 def test_tools_endpoint_structure():
     """Test that tools have consistent structure."""

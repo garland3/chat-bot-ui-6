@@ -10,34 +10,16 @@ router = APIRouter()
 # Available data sources configuration
 AVAILABLE_DATA_SOURCES = [
     {
-        "id": "employees",
-        "name": "Employee Data",
-        "description": "Access employee directory and HR information",
-        "category": "hr"
+        "id": "data-test",
+        "name": "Test Data Source",
+        "description": "A simple test data source for demonstration purposes",
+        "category": "testing"
     },
     {
-        "id": "products", 
-        "name": "Product Catalog",
-        "description": "Browse product inventory and specifications",
-        "category": "inventory"
-    },
-    {
-        "id": "orders",
-        "name": "Order History", 
-        "description": "View customer orders and transaction history",
-        "category": "sales"
-    },
-    {
-        "id": "analytics",
-        "name": "Analytics Data",
-        "description": "Access business metrics and analytics",
-        "category": "business"
-    },
-    {
-        "id": "documents",
-        "name": "Document Library",
-        "description": "Search through company documents and knowledge base",
-        "category": "knowledge"
+        "id": "new-mexico-history",
+        "name": "New Mexico History",
+        "description": "Historical information and facts about the state of New Mexico",
+        "category": "historical"
     }
 ]
 

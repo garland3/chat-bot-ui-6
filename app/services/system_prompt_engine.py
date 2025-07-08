@@ -4,6 +4,7 @@ System Prompt Engine for dynamic prompt generation based on tool and data source
 import os
 from typing import List, Optional
 from app.config import settings
+from app.services.data_source_manager import data_source_manager
 
 
 class SystemPromptEngine:
@@ -64,23 +65,15 @@ class SystemPromptEngine:
         """Generate context for selected data sources."""
         if not data_sources:
             return ""
-            
-        context = "You have access to the following data sources: " + ", ".join(data_sources)
         
-        # Add specific guidance for known data sources
-        data_source_guidance = []
+        # Get dynamic content from the data source manager
+        data_source_content = data_source_manager.get_data_source_content(data_sources)
         
-        if "employees" in data_sources:
-            data_source_guidance.append("employees (staff directory and organizational information)")
-        if "products" in data_sources:
-            data_source_guidance.append("products (product catalog and specifications)")
-        if "orders" in data_sources:
-            data_source_guidance.append("orders (order history and transaction data)")
+        if data_source_content:
+            return f"ACTIVE DATA SOURCES:\n{data_source_content}"
         
-        if data_source_guidance:
-            context += ": " + ", ".join(data_source_guidance)
-        
-        return context
+        # Fallback to basic listing if no specific content is available
+        return "You have access to the following data sources: " + ", ".join(data_sources)
     
     def _generate_tools_context(self, tools: List[str]) -> str:
         """Generate context for selected tools."""
