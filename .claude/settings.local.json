@@ -28,7 +28,11 @@
       "Bash(# Remove the old Phase 15 architecture test with many xfails\nrm tests/integration/test_phase_15_architecture.py\n\n# Test the remaining integration tests\ntimeout 60s uv run pytest tests/integration/ -v)",
       "Bash(cp:*)",
       "Bash(./run_all_tests.sh)",
-      "Bash(ss:*)"
+      "Bash(ss:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh workflow:*)",
+      "Bash(git push:*)",
+      "Bash(gh run:*)"
     ],
     "deny": []
   }

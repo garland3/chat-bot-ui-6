@@ -73,5 +73,10 @@ class ToolManager:
                 }
             })
         return definitions
+    
+    def reload_tools(self):
+        """Reload all tools from the tools folder."""
+        self._tools.clear()
+        self._register_tools()
 
 tool_manager = ToolManager()

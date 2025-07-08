@@ -60,12 +60,16 @@ class TestDynamicTool(BaseTool):
     test_tool_path = "/app/tools/test_dynamic_tool.py"
     
     try:
+        # Ensure tools directory exists
+        os.makedirs("/app/tools", exist_ok=True)
+        
         # Write the test tool
         with open(test_tool_path, 'w') as f:
             f.write(test_tool_content)
         
         # Create a fresh tool manager that should discover the new tool
         tool_manager = ToolManager()
+        tool_manager.reload_tools()  # Force reload to pick up new tool
         tools = tool_manager.get_all_tool_definitions()
         tool_names = [tool["function"]["name"] for tool in tools]
         
@@ -92,12 +96,17 @@ def test_removing_tool_from_folder_makes_it_unavailable():
     user_tool_path = "/app/tools/user_lookup_tool.py"
     temp_path = "/app/temp_no_tool/user_lookup_tool_temp.py"
     
+    # Ensure directories exist
+    os.makedirs("/app/tools", exist_ok=True)
+    os.makedirs("/app/temp_no_tool", exist_ok=True)
+    
     if os.path.exists(user_tool_path):
         shutil.move(user_tool_path, temp_path)
     
     try:
         # Create tool manager without UserLookupTool
         tool_manager = ToolManager()
+        tool_manager.reload_tools()  # Force reload to pick up changes
         tools = tool_manager.get_all_tool_definitions()
         tool_names = [tool["function"]["name"] for tool in tools]
         
