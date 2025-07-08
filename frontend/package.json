@@ -24,6 +24,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "alpinejs": "^3.13.0"
+    "alpinejs": "^3.13.0",
+    "marked": "^16.0.0"
   }
 }

@@ -1,4 +1,14 @@
 import Alpine from 'alpinejs'
+import { marked } from 'marked'
+
+// Configure marked for safe rendering
+marked.setOptions({
+    breaks: true,
+    gfm: true,
+    sanitize: false,
+    smartLists: true,
+    smartypants: false
+})
 
 // Make Alpine available globally for debugging
 window.Alpine = Alpine
@@ -323,9 +333,104 @@ document.addEventListener('alpine:init', () => {
                     messagesContainer.scrollTop = messagesContainer.scrollHeight
                 }
             })
+        },
+
+        // Format markdown content
+        formatMarkdown(content) {
+            try {
+                let html = marked.parse(content || '')
+                
+                // Add copy buttons to code blocks
+                html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (match, attributes, code) => {
+                    // Generate a unique ID for this code block
+                    const codeId = 'code-' + Math.random().toString(36).substr(2, 9)
+                    // Decode HTML entities in the code content
+                    const decodedCode = code
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>')
+                        .replace(/&amp;/g, '&')
+                        .replace(/&quot;/g, '"')
+                        .replace(/&#39;/g, "'")
+                    
+                    return `
+                        <div class="code-block-container">
+                            <pre><code${attributes} id="${codeId}">${code}</code></pre>
+                            <button class="copy-button" onclick="copyCodeToClipboard('${codeId}', this)" title="Copy code">
+                                Copy
+                            </button>
+                        </div>
+                    `
+                })
+                
+                return html
+            } catch (error) {
+                console.error('Markdown parsing error:', error)
+                return content || ''
+            }
         }
     }))
 })
+
+// Global function for copying code to clipboard
+window.copyCodeToClipboard = async function(codeId, buttonElement) {
+    try {
+        const codeElement = document.getElementById(codeId)
+        if (!codeElement) {
+            console.error('Code element not found:', codeId)
+            return
+        }
+        
+        // Get the text content and decode HTML entities
+        let codeText = codeElement.textContent || codeElement.innerText
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(codeText)
+        
+        // Update button appearance
+        const originalText = buttonElement.textContent
+        buttonElement.textContent = 'Copied!'
+        buttonElement.classList.add('copied')
+        
+        // Reset button after 2 seconds
+        setTimeout(() => {
+            buttonElement.textContent = originalText
+            buttonElement.classList.remove('copied')
+        }, 2000)
+        
+    } catch (error) {
+        console.error('Failed to copy code:', error)
+        
+        // Fallback for older browsers
+        const codeElement = document.getElementById(codeId)
+        if (codeElement) {
+            const range = document.createRange()
+            range.selectNodeContents(codeElement)
+            const selection = window.getSelection()
+            selection.removeAllRanges()
+            selection.addRange(range)
+            
+            try {
+                document.execCommand('copy')
+                buttonElement.textContent = 'Copied!'
+                buttonElement.classList.add('copied')
+                
+                setTimeout(() => {
+                    buttonElement.textContent = 'Copy'
+                    buttonElement.classList.remove('copied')
+                }, 2000)
+                
+            } catch (fallbackError) {
+                console.error('Fallback copy failed:', fallbackError)
+                buttonElement.textContent = 'Failed'
+                setTimeout(() => {
+                    buttonElement.textContent = 'Copy'
+                }, 2000)
+            }
+            
+            selection.removeAllRanges()
+        }
+    }
+}
 
 // Start Alpine
 Alpine.start()

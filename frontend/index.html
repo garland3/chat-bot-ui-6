@@ -76,12 +76,12 @@
         <div class="flex-1 flex flex-col">
             <!-- Chat Messages -->
             <div class="flex-1 overflow-y-auto" id="messages">
-                <div class="max-w-4xl mx-auto px-4 py-6">
+                <div class="max-w-6xl mx-auto px-8 py-6">
                     <template x-for="message in messages" :key="message.id">
                         <div class="mb-8">
                             <!-- User Message -->
                             <div x-show="message.role === 'user'" class="flex items-start space-x-4 justify-end">
-                                <div class="bg-blue-600 text-white rounded-2xl px-4 py-3 max-w-2xl">
+                                <div class="bg-blue-600 text-white rounded-2xl px-4 py-3 max-w-4xl">
                                     <div class="whitespace-pre-wrap" x-text="message.content"></div>
                                 </div>
                                 <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
@@ -94,8 +94,8 @@
                                 <div class="w-8 h-8 bg-gray-600 dark:bg-gray-300 rounded-full flex items-center justify-center text-white dark:text-gray-900 text-sm font-medium">
                                     AI
                                 </div>
-                                <div class="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3 max-w-2xl">
-                                    <div class="whitespace-pre-wrap" x-text="message.content"></div>
+                                <div class="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3 flex-1 mr-12">
+                                    <div class="prose prose-sm max-w-none dark:prose-invert" x-html="formatMarkdown(message.content)"></div>
                                 </div>
                             </div>
                             
@@ -138,7 +138,7 @@
 
             <!-- Input Area -->
             <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                <div class="max-w-4xl mx-auto px-4 py-4">
+                <div class="max-w-6xl mx-auto px-8 py-4">
                     <div class="flex items-end gap-4">
                         <div class="flex-1">
                             <textarea 
