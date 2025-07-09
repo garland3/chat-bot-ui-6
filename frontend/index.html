@@ -16,6 +16,17 @@
                 <button class="mt-3 w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
                     + New chat
                 </button>
+                
+                <!-- WebSocket Status Indicator -->
+                <div class="mt-3 flex items-center justify-between text-xs">
+                    <span class="text-gray-600 dark:text-gray-400">Connection</span>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 rounded-full" 
+                             :class="websocketConnected ? 'bg-green-500' : 'bg-red-500'"></div>
+                        <span class="text-gray-600 dark:text-gray-400"
+                              x-text="websocketConnected ? 'Connected' : 'Disconnected'"></span>
+                    </div>
+                </div>
             </div>
 
             <!-- Model Selection -->

@@ -33,6 +33,7 @@ document.addEventListener('alpine:init', () => {
         loadingDataSources: true,
         appName: 'Galaxy Chat', // Default fallback
         appConfig: null,
+        websocketConnected: false,
 
         // Initialize component
         init() {
@@ -140,6 +141,7 @@ document.addEventListener('alpine:init', () => {
             
             this.websocket.onopen = () => {
                 console.log('WebSocket connected')
+                this.websocketConnected = true
             }
             
             this.websocket.onmessage = (event) => {
@@ -149,6 +151,7 @@ document.addEventListener('alpine:init', () => {
             
             this.websocket.onclose = () => {
                 console.log('WebSocket disconnected')
+                this.websocketConnected = false
                 // Attempt to reconnect after 3 seconds
                 setTimeout(() => this.connectWebSocket(), 3000)
             }
