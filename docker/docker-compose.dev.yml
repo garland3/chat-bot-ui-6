@@ -10,7 +10,7 @@ services:
     volumes:
       - .:/app
     environment:
-      - APP_NAME=Dev Galaxy Chat
+      - APP_NAME=Dev Chat Bot UI 6
       - LLM_CONFIG_FILE=/app/config/llms.yml
       - TEST_MODE=True
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

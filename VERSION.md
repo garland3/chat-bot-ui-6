@@ -6,7 +6,7 @@
 
 ### 🎉 Initial stable release with comprehensive features
 
-This is the first stable release of Galaxy Chat, a modern AI chat application with streaming responses, multiple model support, and a ChatGPT-style interface.
+This is the first stable release of Chat Bot UI 6, a modern AI chat application with streaming responses, multiple model support, and a ChatGPT-style interface.
 
 ### ✨ Key Features
 

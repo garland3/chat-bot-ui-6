@@ -11,7 +11,7 @@ describe('Chat App Frontend', () => {
     dom = new JSDOM(`
       <!DOCTYPE html>
       <html>
-        <head><title>Galaxy Chat</title></head>
+        <head><title>Chat Bot UI 6</title></head>
         <body>
           <div id="app" x-data="chatApp()">
             <select x-model="selectedModel"></select>
@@ -30,7 +30,7 @@ describe('Chat App Frontend', () => {
   })
 
   it('should have correct HTML structure', () => {
-    expect(document.title).toBe('Galaxy Chat')
+    expect(document.title).toBe('Chat Bot UI 6')
     expect(document.querySelector('#app')).toBeTruthy()
     expect(document.querySelector('[x-data="chatApp()"]')).toBeTruthy()
   })

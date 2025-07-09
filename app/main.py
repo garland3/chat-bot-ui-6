@@ -105,12 +105,12 @@ async def serve_frontend():
             
         # Replace title and app name with dynamic values from config
         html_content = html_content.replace(
-            "<title>Galaxy Chat</title>", 
+            "<title>Chat Bot UI 6</title>", 
             f"<title>{settings.app_name}</title>"
         )
         # Replace any hardcoded app names in the content
         html_content = html_content.replace(
-            "Galaxy Chat",
+            "Chat Bot UI 6",
             settings.app_name
         )
             

@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - APP_NAME=Staging Galaxy Chat
+      - APP_NAME=Staging Chat Bot UI 6
       - LLM_CONFIG_FILE=/app/config/llms.yml
       - TEST_MODE=False
     deploy:

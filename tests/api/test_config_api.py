@@ -55,7 +55,7 @@ class TestConfigAPI:
             assert data["app_name"] == expected_name, f"Expected {expected_name}, got {data['app_name']}"
         else:
             # CI environment: should use default value
-            expected_name = "Galaxy Chat"
+            expected_name = "Chat Bot UI 6"
             assert data["app_name"] == expected_name, f"Expected {expected_name}, got {data['app_name']}"
     
     def test_llms_endpoint_uses_yaml_config(self):

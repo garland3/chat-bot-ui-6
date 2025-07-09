@@ -1,12 +1,12 @@
-# Galaxy Chat
+# Chat Bot UI 6
 
 A modern AI chat application with streaming responses, multiple model support, and a ChatGPT-style interface.
 
-![Galaxy Chat Application](readme_imgs/image.png)
+![Chat Bot UI 6 Application](readme_imgs/image.png)
 
 ## Overview
 
-Galaxy Chat is a full-stack web application that provides an intuitive chat interface for interacting with various Large Language Models (LLMs). The application features real-time streaming responses, customizable tools, data source integration, and a responsive modern UI.
+Chat Bot UI 6 is a full-stack web application that provides an intuitive chat interface for interacting with various Large Language Models (LLMs). The application features real-time streaming responses, customizable tools, data source integration, and a responsive modern UI.
 
 ## Features
 

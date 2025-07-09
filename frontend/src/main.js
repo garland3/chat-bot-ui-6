@@ -31,7 +31,7 @@ document.addEventListener('alpine:init', () => {
         loadingModels: true,
         loadingTools: true,
         loadingDataSources: true,
-        appName: 'Galaxy Chat', // Default fallback
+        appName: 'Chat Bot UI 6', // Default fallback
         appConfig: null,
         websocketConnected: false,
 

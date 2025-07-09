@@ -70,7 +70,7 @@ class SimpleBrowserTest:
             content = response.text
             
             # Check for key elements
-            assert "Galaxy Chat" in content
+            assert "Chat Bot UI 6" in content
             assert 'x-data="chatApp()"' in content
             assert 'x-model="selectedModel"' in content
             assert 'x-model="selectedTools"' in content

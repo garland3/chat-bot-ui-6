@@ -9,7 +9,7 @@ load_dotenv("/app/.env", override=True)
 
 class Settings(BaseSettings):
     # Application Configuration
-    app_name: str = "Galaxy Chat"
+    app_name: str = "Chat Bot UI 6"
     
     # LLM Configuration  
     llm_config_file: str = "config/llms.yml"

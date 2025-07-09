@@ -29,7 +29,7 @@ def test_env_file_app_name_propagates_to_api():
         assert data["app_name"] == expected_name, f"Expected '{expected_name}', got '{data['app_name']}'"
     else:
         # CI environment: should use default value
-        expected_name = "Galaxy Chat"
+        expected_name = "Chat Bot UI 6"
         assert data["app_name"] == expected_name, f"Expected '{expected_name}', got '{data['app_name']}'"
 
 def test_env_file_app_name_propagates_to_frontend():
@@ -53,7 +53,7 @@ def test_env_file_app_name_propagates_to_frontend():
         assert f"<title>{expected_name}</title>" in html_content, f"Expected title '{expected_name}' not found in HTML"
     else:
         # CI environment: should use default value
-        expected_name = "Galaxy Chat"
+        expected_name = "Chat Bot UI 6"
         assert f"<title>{expected_name}</title>" in html_content, f"Expected title '{expected_name}' not found in HTML"
 
 def test_dynamic_env_variable_override():
