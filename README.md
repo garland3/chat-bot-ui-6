@@ -2,6 +2,8 @@
 
 A modern AI chat application with streaming responses, multiple model support, and a ChatGPT-style interface.
 
+![Galaxy Chat Application](readme_imgs/image.png)
+
 ## Overview
 
 Galaxy Chat is a full-stack web application that provides an intuitive chat interface for interacting with various Large Language Models (LLMs). The application features real-time streaming responses, customizable tools, data source integration, and a responsive modern UI.
@@ -19,6 +21,7 @@ Galaxy Chat is a full-stack web application that provides an intuitive chat inte
 - **Chat Bubbles**: Distinct styling for user, assistant, and system messages
 - **Keyboard Shortcuts**: Enter to send, Shift+Enter for new lines
 - **Dark/Light Theme Support**: Automatic theme detection and switching
+- **WebSocket Connection Indicator**: Real-time connection status with visual feedback
 
 ### Tools & Data Sources
 - **Selectable Tools**: Calculator, code execution, user lookup, web search, file operations
